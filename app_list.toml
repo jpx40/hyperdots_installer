@@ -1,0 +1,123 @@
+# System
+[system]
+pipewire = true
+pipewire-alsa = true
+pipewire-audio = true
+pipewire-jack = true
+pipewire-pulse = true
+gst-plugin-pipewire = true
+wireplumber = true
+pavucontrol = true
+pamixer = true
+networkmanager = true
+network-manager-applet = true
+bluez = true
+bluez-utils = true
+blueman = true
+brightnessctl = true
+unzip = true
+
+# Display Manager
+[displaymanager]
+sddm = true
+qt5-quickcontrols = true
+qt5-quickcontrols2 = true
+qt5-graphicaleffects = true
+
+# Window Manager
+[windowmanager]
+hyprland = true
+dunst = true
+rofi-lbonn-wayland-git = true
+waybar = true
+swww = true
+swaylock-effects-git = true
+wlogout = true
+grimblast-git = true
+hyprpicker = true
+slurp = true
+swappy = true
+cliphist = true
+
+# Dependencies
+[dependencies]
+polkit-kde-agent = true
+xdg-desktop-portal-hyprland = true
+pacman-contrib = true
+python-pyamdgpuinfo = true
+parallel = true
+jq = true
+imagemagick = true
+qt5-imageformats = true
+ffmpegthumbs = true
+kde-cli-tools = true
+kservice5 = true
+
+# Theming
+[theming]
+nwg-look = true
+qt5ct = true
+qt6ct = true
+kvantum = true
+qt5-wayland = true
+qt6-wayland = true
+
+# Applications
+[extra.applications]
+firefox = true
+kitty = true
+dolphin = true
+ark = true
+# vim = uncomment if desired
+visual-studio-code-bin = true
+# lapce = uncomment if desired
+# code = uncomment if desired
+# code-marketplace = uncomment if desired
+neovim = true
+chezmoi = true
+appimagelauncher = true
+apptainer = true
+
+[extra.neovim]
+# Dependencies for Dev and Neovim
+# Choose one C Compiler
+gcc = true
+# clang = uncomment if desired
+npm = true
+nodejs = true
+python-pipx = true
+rust = true
+cargo = true
+cmake = true
+make = true
+ninja = true
+devtools = true
+python-pynvim = true
+xclip = true
+xsel = true
+wl-clipboard = true
+ttf-nerd-fonts-symbols = true
+ttf-nerd-fonts-symbols-common = true
+ripgrep = true
+fzf = true
+fd = true
+
+# Shell
+[shell]
+# Choose one option for file lister
+eza = true # or
+# lsd = true  # uncomment if desired
+
+# Choose one option for shell (and optionally theme)
+zsh = true
+oh-my-zsh-git = true           # plugin manager (required for theme)
+zsh-theme-powerlevel10k = true # theme (requires oh-my-zsh-git)
+
+# starship = true  # uncomment for fish and its theme
+
+neofetch = true
+pokemon-colorscripts-git = true # uncomment if desired
+
+# Hyprdots
+[hyprdots]
+hyprdots-ctl-git = true
