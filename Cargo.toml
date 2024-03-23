@@ -24,7 +24,6 @@ itertools = "0.12.1"
 log = "0.4.21"
 pipette = "0.1.0"
 rayon = "1.9.0"
-reedline = "0.30.0"
 regex = "1.10.4"
 rustyline = "14.0.0"
 serde = { version = "1.0.197", features = ["derive"] }
