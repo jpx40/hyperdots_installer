@@ -53,7 +53,8 @@ pub fn add_app(app: &str) {
     }
 }
 pub fn add_line(line: &str) {
-    params_file().lock().unwrap().push_str(line);
+    let line = line.to_string() + "\n";
+    params_file().lock().unwrap().push_str(&line);
 }
 
 pub fn params_file() -> &'static Mutex<String> {
@@ -82,7 +83,16 @@ fn add_app_key(app: Option<HashMap<String, bool>>) {
         }
     }
 }
+
+fn write_to_file() {
+    if app_array().lock().unwrap().contains(&"neovim".to_string()) {
+        add_line(r#"export INSTALL_NEOVIM="true""#);
+    } else {
+        add_line(r#"export INSTALL_NEOVIM="false""#);
+    }
+}
 pub fn install() -> Result<(), String> {
+    write_to_file();
     let path: PathBuf = env::current_dir().unwrap();
 
     if !Path::new("~/.cache/hyprdots").exists() {
@@ -133,7 +143,6 @@ pub fn install_editor(editor: EditorList) {
         EditorList::Code => add_app("code"),
         EditorList::Neovim => {
             add_extra_deps(app_list, "neovim", "editor");
-            add_line(r#"export INSTALL_NEOVIM="true""#);
         }
         EditorList::Any => {
             add_extra_deps(app_list, "any", "editor");
