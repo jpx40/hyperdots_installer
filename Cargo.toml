@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+alpm = "3.0.5"
 argparse = "0.2.2"
 cell = "0.1.8"
 chrono = "0.4.35"

@@ -78,8 +78,17 @@ chezmoi = true
 appimagelauncher = true
 apptainer = true
 
+[extra.editor.intellij]
+jdk-openjdk = true
+intellij-idea-community = true
 
-[extra.optional]
+[extra.apps.development]
+neovide = true
+
+[extra.apps.terminal]
+alacritty = true
+
+[extra.optional.apps]
 
 [extra.editor.neovim]
 # Dependencies for Dev and Neovim

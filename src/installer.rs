@@ -1,4 +1,5 @@
 use crate::utils::{self, read_app_list};
+use alpm;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -11,7 +12,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-type Extra = Option<HashMap<String, Option<HashMap<String, Option<HashMap<String, bool>>>>>>;
+type Extra = Option<HashMap<String, HashMap<String, HashMap<String, bool>>>>;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 struct Kategorie(Option<HashMap<String, Option<HashMap<String, bool>>>>);
@@ -60,6 +61,7 @@ pub fn install_from_config() {
     add_app_key(app_list.hyperdots);
     add_app_key(app_list.dependicies);
     add_app_key(app_list.shell);
+    install_applications();
 }
 fn add_app_key(app: Option<HashMap<String, bool>>) {
     if let Some(app) = app {
@@ -91,40 +93,48 @@ pub enum EditorList {
     //    Unknown,
     Any,
 }
+
+// pub fn is_installed(app: &str) -> bool {
+//     let installed = false;
+//     if alpm::Dbpkg(app) {
+//         installed
+//     } else {
+//         installed
+//     }
+//     installed
+// }
+
+fn install_applications() {
+    let app_list = APP_LIST.clone();
+    add_extra_deps(app_list, "application", "apps")
+}
 pub fn install_editor(editor: EditorList) {
     let app_list = APP_LIST.clone();
 
     match editor {
         EditorList::Intellij => add_app("intellij-idea-community-edition"),
-        EditorList::VsCode => add_app("vscode"),
+        EditorList::VsCode => add_app("visual-studio-code-bin"),
         EditorList::Code => add_app("code"),
         EditorList::Neovim => add_extra_deps(app_list, "neovim", "editor"),
         EditorList::Any => {
-            add_app("code");
-            add_app("neovim");
-            add_app("vscode");
-            add_app("intellij-idea-community-edition");
+            add_extra_deps(app_list, "any", "editor");
         }
     }
 }
 
 fn add_extra_deps(app_list: AppList, app: &str, kategorie: &str) {
-    add_app(app);
-
     if let Some(apps) = app_list.extra {
         for (k, v) in apps.clone().unwrap() {
             if kategorie == k {
-                if let Some(v) = v {
-                    for (ak, av) in v {
-                        if let Some(av) = av {
-                            if ak == app {
-                                av.iter().for_each(|(k, v)| {
-                                    if *v {
-                                        add_app(k);
-                                    }
-                                });
-                                break;
+                for (ak, av) in v {
+                    if ak == app || app == "any" {
+                        av.iter().for_each(|(k, v)| {
+                            if *v {
+                                add_app(k);
                             }
+                        });
+                        if app != "any" {
+                            break;
                         }
                     }
                 }

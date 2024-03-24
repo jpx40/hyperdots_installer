@@ -30,8 +30,8 @@ pub fn menu(c: Cli) -> Result<()> {
             Ok(line) => match line.to_lowercase().as_str() {
                 "y" => {
                     println!("Backup of Config");
-                    let backup = false;
-                    utils::backup(&c.backup_path, backup).unwrap();
+
+                    utils::backup(&c.backup_path, c.backup).unwrap();
                     break;
                 }
                 "n" => {

@@ -38,6 +38,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "alpm"
+version = "3.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "310ec5dc25b236ee96bebf975af2d2de85e61001a7c39a0a7436a414ff3f6490"
+dependencies = [
+ "alpm-sys",
+ "bitflags 2.5.0",
+]
+
+[[package]]
+name = "alpm-sys"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08a17e0cf15a06d4b86e30c606ee8808ad791300f3bd5e364c30360354b010bd"
+dependencies = [
+ "pkg-config",
+]
+
+[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -934,6 +953,7 @@ dependencies = [
 name = "installer"
 version = "0.1.0"
 dependencies = [
+ "alpm",
  "argparse",
  "cell",
  "chrono",
