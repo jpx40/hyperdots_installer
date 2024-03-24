@@ -78,6 +78,9 @@ chezmoi = true
 appimagelauncher = true
 apptainer = true
 
+
+[extra.optional]
+
 [extra.neovim]
 # Dependencies for Dev and Neovim
 # Choose one C Compiler
@@ -101,6 +104,11 @@ ttf-nerd-fonts-symbols-common = true
 ripgrep = true
 fzf = true
 fd = true
+
+[extra.code]
+code-marketplace = true
+# Choose one C Compiler
+# clang = uncomment if desired
 
 # Shell
 [shell]

@@ -50,8 +50,14 @@ pub enum Group {
 fn main() {
     let cli = Cli::parse();
     cli::check_arguments(cli.clone());
-    menu::menu(cli).unwrap();
+    match menu::menu(cli) {
+        Ok(()) => {}
+        Err(e) => println!("{}", e),
+    }
 
-    installer::install()
+    match installer::install() {
+        Ok(()) => println!("continue"),
+        Err(_) => println!("failed to write installer file"),
+    }
     //println!(insller::app_list()
 }
