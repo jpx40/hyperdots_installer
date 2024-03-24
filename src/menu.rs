@@ -1,5 +1,6 @@
 use crate::conf;
 use crate::installer;
+use crate::installer::EditorList;
 use crate::utils;
 use crate::Cli;
 use rustyline::error::ReadlineError;
@@ -20,8 +21,8 @@ pub fn menu(c: Cli) -> Result<()> {
     println!("\n");
 
     loop {
-        println!("Choose Software");
-        println!("1. From Config, 1. All | Default: 1");
+        println!("Backup | y/n | Default: y");
+
         let readline = rl.readline(">> "); // read
                                            // eval / printy
 
@@ -55,15 +56,15 @@ pub fn menu(c: Cli) -> Result<()> {
 
             Err(err) => {
                 println!("Error: {:?}", err);
-                process::exit(0);
+                //           process::exit(0);
             }
         }
     } // loop
+      //
     loop {
-        println!("Backup | y/n | Default: y");
+        println!("Choose Software");
+        println!("1. From Config, 2. All | Default: 1");
         let readline = rl.readline(">> "); // read
-                                           // eval / printy
-
         match readline {
             Ok(line) => match line.as_str() {
                 "1" => {
@@ -93,7 +94,57 @@ pub fn menu(c: Cli) -> Result<()> {
 
             Err(err) => {
                 println!("Error: {:?}", err);
+                //         process::exit(0);
+            }
+        }
+    }
+    loop {
+        println!("Choose Software");
+        println!("1. Code (VScode Open Source Edition), 2. Intellij, 3. VScode, 4. Neovim  5. All | Default: 1");
+        let readline = rl.readline(">> "); // read
+                                           // eval / printy
+
+        match readline {
+            Ok(line) => match line.as_str() {
+                "1" => {
+                    println!("Installing Code");
+                    installer::install_editor(EditorList::Code);
+                    break;
+                }
+                "2" => {
+                    println!("Installing Intellij");
+                    installer::install_editor(EditorList::Intellij);
+                    break;
+                }
+
+                "3" => {
+                    println!("Installing VScode");
+                    installer::install_editor(EditorList::VsCode);
+                    break;
+                }
+                "4" => {
+                    println!("Installing Neovim");
+                    installer::install_editor(EditorList::Neovim);
+                    break;
+                }
+                "5" => {
+                    println!("Installing All");
+                    installer::install_editor(EditorList::Any);
+                    break;
+                }
+
+                _ => {
+                    println!("Invalid Input")
+                }
+            },
+            Err(ReadlineError::Interrupted) => {
+                println!("CTRL-C");
                 process::exit(0);
+            }
+
+            Err(err) => {
+                println!("Error: {:?}", err);
+                //  process::exit(0);
             }
         }
     } // loop

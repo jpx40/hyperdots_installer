@@ -14,6 +14,7 @@ use std::path::PathBuf;
 use std::process;
 use std::process::Command;
 use std::string::String;
+use std::sync::{Mutex, OnceLock};
 use std::time;
 use std::time::Duration;
 use std::vec::Vec;
@@ -50,4 +51,7 @@ fn main() {
     let cli = Cli::parse();
     cli::check_arguments(cli.clone());
     menu::menu(cli).unwrap();
+
+    installer::install()
+    //println!(insller::app_list()
 }
