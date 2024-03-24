@@ -1,8 +1,10 @@
 use crate::utils::{self, read_app_list};
 use alpm;
+use home::home_dir;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs::create_dir_all;
 use std::io::Write;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex, OnceLock};
@@ -50,6 +52,14 @@ pub fn add_app(app: &str) {
         app_array().lock().unwrap().push(app.to_string());
     }
 }
+pub fn add_line(line: &str) {
+    params_file().lock().unwrap().push_str(line);
+}
+
+pub fn params_file() -> &'static Mutex<String> {
+    static PARAMS: OnceLock<Mutex<String>> = OnceLock::new();
+    PARAMS.get_or_init(|| Mutex::new(String::new()))
+}
 
 pub fn install_all() {}
 
@@ -75,8 +85,14 @@ fn add_app_key(app: Option<HashMap<String, bool>>) {
 pub fn install() -> Result<(), String> {
     let path: PathBuf = env::current_dir().unwrap();
 
+    if !Path::new("~/.cache/hyprdots").exists() {
+        create_dir_all(Path::new("~/.cache/hyprdots")).unwrap_or_else(|err| panic!("{}", err));
+    }
+    let cache_path = Path::new("~/.cache/hyprdots/");
+    let mut file: File = File::create(cache_path.join("custom_hypr.lst")).unwrap();
     let mut app_file: File = File::create(path.join("custom_hypr.lst")).unwrap();
-
+    file.write_all(params_file().lock().unwrap().as_bytes())
+        .unwrap_or_else(|err| panic!("{}", err));
     for app in app_array().lock().unwrap().iter() {
         println!("Installing: {:?}", app);
         let buf = app.clone() + "\n";
@@ -115,7 +131,10 @@ pub fn install_editor(editor: EditorList) {
         EditorList::Intellij => add_app("intellij-idea-community-edition"),
         EditorList::VsCode => add_app("visual-studio-code-bin"),
         EditorList::Code => add_app("code"),
-        EditorList::Neovim => add_extra_deps(app_list, "neovim", "editor"),
+        EditorList::Neovim => {
+            add_extra_deps(app_list, "neovim", "editor");
+            add_line(r#"export INSTALL_NEOVIM="true""#);
+        }
         EditorList::Any => {
             add_extra_deps(app_list, "any", "editor");
         }

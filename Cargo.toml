@@ -44,3 +44,11 @@ time = "0.3.34"
 toml = "0.8.12"
 walkdir = "2.5.0"
 zip = "0.6.6"
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+strip = "debuginfo"
