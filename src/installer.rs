@@ -10,11 +10,17 @@ use std::{
     fs::File,
     path::{Path, PathBuf},
 };
+
+type Extra = Option<HashMap<String, Option<HashMap<String, Option<HashMap<String, bool>>>>>>;
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+struct Kategorie(Option<HashMap<String, Option<HashMap<String, bool>>>>);
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct AppList {
     pub system: Option<HashMap<String, bool>>,
     pub displaymanager: Option<HashMap<String, bool>>,
-    pub extra: Option<HashMap<String, Option<HashMap<String, bool>>>>,
+    // pub extra: Option<HashMap<String, Option<HashMap<String, bool>>>>,
+    pub extra: Option<Extra>,
     pub shell: Option<HashMap<String, bool>>,
     pub windowmanager: Option<HashMap<String, bool>>,
     pub dependicies: Option<HashMap<String, bool>>,
@@ -22,8 +28,14 @@ pub struct AppList {
     pub hyperdots: Option<HashMap<String, bool>>,
 }
 
+// #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+// enum Extra {
+//     HashMap,
+//     String,
+// }
+
 lazy_static! {
-    static ref APP_LIST: AppList = utils::read_app_list().unwrap();
+    static ref APP_LIST: AppList = utils::read_app_list().unwrap_or_else(|err| panic!("{}", err));
 }
 
 // https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton
@@ -86,7 +98,7 @@ pub fn install_editor(editor: EditorList) {
         EditorList::Intellij => add_app("intellij-idea-community-edition"),
         EditorList::VsCode => add_app("vscode"),
         EditorList::Code => add_app("code"),
-        EditorList::Neovim => add_extra_deps(app_list, "neovim"),
+        EditorList::Neovim => add_extra_deps(app_list, "neovim", "editor"),
         EditorList::Any => {
             add_app("code");
             add_app("neovim");
@@ -96,18 +108,25 @@ pub fn install_editor(editor: EditorList) {
     }
 }
 
-fn add_extra_deps(app_list: AppList, app: &str) {
+fn add_extra_deps(app_list: AppList, app: &str, kategorie: &str) {
     add_app(app);
 
     if let Some(apps) = app_list.extra {
-        for (k, v) in apps {
-            if k == app {
+        for (k, v) in apps.clone().unwrap() {
+            if kategorie == k {
                 if let Some(v) = v {
-                    v.iter().for_each(|(k, v)| {
-                        if *v {
-                            add_app(k);
+                    for (ak, av) in v {
+                        if let Some(av) = av {
+                            if ak == app {
+                                av.iter().for_each(|(k, v)| {
+                                    if *v {
+                                        add_app(k);
+                                    }
+                                });
+                                break;
+                            }
                         }
-                    });
+                    }
                 }
                 break;
             }

@@ -63,7 +63,7 @@ qt5-wayland = true
 qt6-wayland = true
 
 # Applications
-[extra.applications]
+[extra.apps.applications]
 firefox = true
 kitty = true
 dolphin = true
@@ -81,7 +81,7 @@ apptainer = true
 
 [extra.optional]
 
-[extra.neovim]
+[extra.editor.neovim]
 # Dependencies for Dev and Neovim
 # Choose one C Compiler
 gcc = true
@@ -105,7 +105,8 @@ ripgrep = true
 fzf = true
 fd = true
 
-[extra.code]
+[extra.editor.code]
+code = true
 code-marketplace = true
 # Choose one C Compiler
 # clang = uncomment if desired
