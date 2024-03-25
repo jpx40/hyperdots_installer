@@ -46,11 +46,32 @@ pub enum Group {
     All,
 }
 
+struct App {
+    name: String,
+    path: String,
+    group: String,
+}
+struct Config {
+    apps: Vec<App>,
+}
+struct Feature {
+    backup: bool,
+}
+impl Feature {
+    fn new() -> Self {
+        Feature { backup: false }
+    }
+    fn set_backup(&mut self, backup: bool) {
+        self.backup = backup;
+    }
+}
+
 //struct Commands {}
 fn main() {
+    let mut feature = Feature::new();
     let cli = Cli::parse();
     cli::check_arguments(cli.clone());
-    match menu::menu(cli) {
+    match menu::menu(cli, feature) {
         Ok(()) => {}
         Err(e) => println!("{}", e),
     }

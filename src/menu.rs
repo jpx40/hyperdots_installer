@@ -3,12 +3,14 @@ use crate::installer;
 use crate::installer::EditorList;
 use crate::utils;
 use crate::Cli;
+use crate::Feature;
+use futures::future;
 use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, Result};
 use std::env;
 use std::io;
 use std::process;
-pub fn menu(c: Cli) -> Result<()> {
+pub fn menu(c: Cli, f: Feature) -> Result<()> {
     env_logger::init();
     let mut rl = DefaultEditor::new()?;
 
@@ -19,48 +21,48 @@ pub fn menu(c: Cli) -> Result<()> {
     //
     println!("\n\nWelcome to the Installer");
     println!("\n");
+    if f.backup {
+        loop {
+            println!("Backup | y/n | Default: y");
 
-    loop {
-        println!("Backup | y/n | Default: y");
+            let readline = rl.readline(">> "); // read
+                                               // eval / printy
 
-        let readline = rl.readline(">> "); // read
-                                           // eval / printy
+            match readline {
+                Ok(line) => match line.to_lowercase().as_str() {
+                    "y" => {
+                        println!("Backup of Config");
 
-        match readline {
-            Ok(line) => match line.to_lowercase().as_str() {
-                "y" => {
-                    println!("Backup of Config");
+                        utils::backup(&c.backup_path, c.backup).unwrap();
+                        break;
+                    }
+                    "n" => {
+                        println!("No Backup");
+                        break;
+                    }
 
-                    utils::backup(&c.backup_path, c.backup).unwrap();
-                    break;
+                    "" => {
+                        println!("Backup of Config");
+                        let backup = false;
+                        utils::backup(&c.backup_path, backup).unwrap();
+                        break;
+                    }
+                    _ => {
+                        println!("Invalid Input")
+                    }
+                },
+                Err(ReadlineError::Interrupted) => {
+                    println!("CTRL-C");
+                    process::exit(0);
                 }
-                "n" => {
-                    println!("No Backup");
-                    break;
-                }
 
-                "" => {
-                    println!("Backup of Config");
-                    let backup = false;
-                    utils::backup(&c.backup_path, backup).unwrap();
-                    break;
+                Err(err) => {
+                    println!("Error: {:?}", err);
+                    //           process::exit(0);
                 }
-                _ => {
-                    println!("Invalid Input")
-                }
-            },
-            Err(ReadlineError::Interrupted) => {
-                println!("CTRL-C");
-                process::exit(0);
             }
-
-            Err(err) => {
-                println!("Error: {:?}", err);
-                //           process::exit(0);
-            }
-        }
-    } // loop
-      //
+        } // loop
+    }
     loop {
         println!("Choose Software");
         println!("1. From Config, 2. All | Default: 1");
