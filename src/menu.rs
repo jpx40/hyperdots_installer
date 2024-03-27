@@ -77,9 +77,19 @@ impl Menu {
     }
     pub fn add_group(&mut self, group: Group) {
         self.groups
-            .insert(group.group.clone().unwrap_or_default(), group);
+            .insert(group.name.clone().unwrap_or_default(), group);
+    }
+    pub fn remove_group(&mut self, group: &str) {
+        self.groups.remove(group);
     }
 
+    pub fn new_group(&mut self, name: String) {
+        self.new_group_with_name(name)
+    }
+    pub fn new_group_with_name(&mut self, name: String) {
+        self.groups.insert(name.clone(), Group::new_with_name(name));
+    }
+    pub fn editor_config(&mut self) {}
     pub fn entry(&mut self) {
         loop {
             println!("Choose Software");
@@ -123,19 +133,48 @@ impl Menu {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Group {
-    pub group: Option<String>,
+    pub name: Option<String>,
     pub bin: HashMap<String, App>,
     pub description: Option<String>,
     pub default: Option<App>,
+    pub category: Option<String>,
 }
 
 impl Group {
     pub fn new() -> Self {
         Self {
-            group: None,
+            name: None,
             bin: HashMap::new(),
             description: None,
             default: None,
+            category: None,
+        }
+    }
+    pub fn new_with_name(name: String) -> Self {
+        Self {
+            name: Some(name),
+            bin: HashMap::new(),
+            description: None,
+            default: None,
+            category: None,
+        }
+    }
+    pub fn new_with_name_and_category(name: String, category: String) -> Self {
+        Self {
+            name: Some(name),
+            bin: HashMap::new(),
+            description: None,
+            default: None,
+            category: Some(category),
+        }
+    }
+    pub fn new_with_category(category: String) -> Self {
+        Self {
+            name: None,
+            bin: HashMap::new(),
+            description: None,
+            default: None,
+            category: Some(category),
         }
     }
 
@@ -148,11 +187,14 @@ impl Group {
     pub fn add_app(&mut self, name: String) {
         self.bin.insert(name.clone(), App::new(name));
     }
+    pub fn remove_app(&mut self, name: &str) {
+        self.bin.remove(name);
+    }
     pub fn add_description(&mut self, description: String) {
         self.description = Some(description);
     }
-    pub fn add_group(&mut self, group: String) {
-        self.group = Some(group);
+    pub fn add_name(&mut self, group: String) {
+        self.name = Some(group);
     }
 }
 
