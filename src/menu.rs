@@ -9,6 +9,7 @@ use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, Editor, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
+use std::default;
 use std::env;
 use std::fs;
 use std::io;
@@ -90,33 +91,72 @@ impl Menu {
         self.groups.insert(name.clone(), Group::new_with_name(name));
     }
     pub fn editor_config(&mut self) {}
-    pub fn entry(&mut self) {
+    pub fn entry(&mut self, group: Group) {
+        let mut group = group;
+        let mut text: String = String::new();
+        let mut lines: Vec<Line> = Vec::new();
+        let mut count: i32 = 0;
+        let mut default: App = App::new("Neovim".to_string());
+        let mut default_str: String = String::new();
+
+        match group.default.clone() {
+            Some(d) => {
+                default = d;
+                default_str = format!("Default: 1.");
+                if group.bin.contains_key(&default.name) {
+                    group.remove_app(&default.name);
+                }
+            }
+            None => {
+                let mut count = 0;
+                for (k, v) in group.bin.iter() {
+                    count += 1;
+                    default = v.clone();
+                    default_str = format!("Default: 1.");
+
+                    group.to_owned().bin.remove(&default.name);
+                    if count == 1 {
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (k, v) in group.bin.iter() {
+            count += 1;
+            // let line = format!("{count}. {k} ");
+            //lines.push(Line::new(text, v.clone()));
+            text.push_str(&format!("{count}. {k} "));
+        }
+        if let Some(name) = group.name {
+            println!("{name}");
+        }
+        println!("{text}");
+        println!("{default_str}");
         loop {
-            println!("Choose Software");
-            println!("1. From Config, 2. All | Default: 1");
             let readline = &self.editor.readline(">> "); // read
             match readline {
-                Ok(line) => match line.as_str() {
-                    "1" => {
-                        println!("Installing from Config");
-                        installer::install_from_config();
-                        break;
-                    }
-                    "2" => {
-                        println!("Installing All");
-                        installer::install_all();
-                        break;
-                    }
+                Ok(line) => {
+                    let mut count: i32 = 2;
 
-                    "" => {
-                        println!("Installing from Config");
-                        installer::install_from_config();
-                        break;
+                    if line == "1" {
+                        match default.fullname.clone() {
+                            Some(n) => installer::add_app(&n),
+                            None => installer::add_app(&default.name),
+                        }
+                    } else {
+                        for (_k, v) in group.bin.iter() {
+                            if line == &count.to_string() {
+                                match v.fullname.clone() {
+                                    Some(n) => installer::add_app(&n),
+                                    None => installer::add_app(&default.name),
+                                }
+                                count += 1;
+                            }
+                        }
                     }
-                    _ => {
-                        println!("Invalid Input")
-                    }
-                },
+                }
+                //  for (k, v) in group.bin.iter() {},
                 Err(ReadlineError::Interrupted) => {
                     println!("CTRL-C");
                     process::exit(0);
@@ -128,6 +168,16 @@ impl Menu {
                 }
             }
         }
+    }
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Line {
+    text: String,
+    app: App,
+}
+impl Line {
+    pub fn new(text: String, app: App) -> Self {
+        Self { text, app }
     }
 }
 
@@ -183,6 +233,11 @@ impl Group {
     }
     pub fn add_default(&mut self, app: App) {
         self.default = Some(app);
+        if let Some(app) = &self.default {
+            if self.bin.contains_key(&app.name) {
+                self.bin.remove(&app.name);
+            }
+        }
     }
     pub fn add_app(&mut self, name: String) {
         self.bin.insert(name.clone(), App::new(name));
@@ -203,6 +258,7 @@ pub struct App {
     pub name: String,
     pub version: Option<String>,
     pub description: Option<String>,
+    pub fullname: Option<String>,
 }
 
 impl App {
@@ -211,10 +267,14 @@ impl App {
             name,
             version: None,
             description: None,
+            fullname: None,
         }
     }
     pub fn add_version(&mut self, version: String) {
         self.version = Some(version);
+    }
+    pub fn add_fullname(&mut self, fullname: String) {
+        self.fullname = Some(fullname);
     }
 
     pub fn add_description(&mut self, description: String) {

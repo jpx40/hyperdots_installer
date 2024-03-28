@@ -74,7 +74,7 @@ pub fn install_from_config() {
     add_app_key(app_list.shell);
     install_applications();
 }
-fn add_app_key(app: Option<HashMap<String, bool>>) {
+pub fn add_app_key(app: Option<HashMap<String, bool>>) {
     if let Some(app) = app {
         for (k, v) in app {
             if v {
