@@ -9,6 +9,15 @@ pub struct Config {
     pub config_dir: String,
 }
 
+// struct App {
+//     name: String,
+//     path: String,
+//     group: String,
+// }
+// struct Config {
+//     apps: Vec<App>,
+// }
+
 impl Config {
     // pub fn new_from_env() -> Config {
     //     Config {

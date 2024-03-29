@@ -13,6 +13,7 @@ use std::default;
 use std::env;
 use std::fs;
 use std::io;
+use std::panic;
 use std::path::{Path, PathBuf};
 use std::process;
 use std::string::String;
@@ -86,36 +87,39 @@ impl Menu {
         self.groups.remove(group);
     }
 
-    pub fn new_group(&mut self, name: String) {
+    pub fn new_group(&mut self, name: &str) {
         self.new_group_with_name(name)
     }
-    pub fn new_group_with_name(&mut self, name: String) {
-        self.groups.insert(name.clone(), Group::new_with_name(name));
+    pub fn new_group_with_name(&mut self, name: &str) {
+        self.groups
+            .insert(name.to_string().clone(), Group::new_with_name(name));
     }
     pub fn editor_config(&mut self) {}
-    pub fn entry(&mut self, group: Group) {
+    pub fn entry(&mut self, group: Group) -> Result<()> {
         let mut group = group;
         let mut text: String = String::new();
-        let mut lines: Vec<Line> = Vec::new();
-        let mut count: i32 = 0;
-        let mut default: App = App::new("Neovim".to_string());
+        //  let mut lines: Vec<Line> = Vec::new();
+        let mut default: App = App::new("Neovim");
         let mut default_str: String = String::new();
 
         match group.default.clone() {
             Some(d) => {
                 default = d;
-                default_str = format!("Default: 1.");
+                default_str = "Default: 1.".to_string();
+                if default.position != 1 {
+                    default.to_owned().set_position(1);
+                }
                 if group.bin.contains_key(&default.name) {
                     group.remove_app(&default.name);
                 }
             }
             None => {
                 let mut count = 0;
-                for (k, v) in group.bin.iter() {
-                    count += 1;
+                for (_k, v) in group.bin.iter() {
                     default = v.clone();
-                    default_str = format!("Default: 1.");
-
+                    v.to_owned().set_position(1);
+                    default_str = "Default: 1.".to_string();
+                    count += 1;
                     group.to_owned().bin.remove(&default.name);
                     if count == 1 {
                         break;
@@ -124,25 +128,39 @@ impl Menu {
             }
         }
 
-        for (k, _v) in group.bin.iter() {
+        let mut count: u32 = 1;
+
+        for (k, v) in group.bin.iter() {
             count += 1;
             // let line = format!("{count}. {k} ");
             //lines.push(Line::new(text, v.clone()));
+            v.to_owned().set_position(count);
             text.push_str(&format!("{count}. {k} "));
         }
         if let Some(name) = group.name {
             println!("{name}");
         }
-        println!("{text}");
+        println!("1. {} {text}", group.default.unwrap().name);
         println!("{default_str}");
-        loop {
+        'outer: loop {
             let readline = &self.editor.readline(">> "); // read
             match readline {
                 Ok(line) => {
-                    let mut count: i32 = 2;
+                    // let mut count: i32 = 2;
+                    let line = line.trim();
                     if is_number(line) {
                         let len = group.bin.len() + 1;
-                        if line
+                        if line.is_empty() {
+                            match default.fullname.clone() {
+                                Some(n) => {
+                                    installer::add_app(&n);
+                                }
+                                None => {
+                                    installer::add_app(&default.name);
+                                }
+                            }
+                            break 'outer;
+                        } else if line
                             .parse::<usize>()
                             .unwrap_or_else(|err| panic!("{:?}", err))
                             >= len
@@ -151,24 +169,38 @@ impl Menu {
                                 .unwrap_or_else(|err| panic!("{:?}", err))
                                 == len
                         {
+                            println!("{line}");
                             if line == "1" {
                                 match default.fullname.clone() {
-                                    Some(n) => installer::add_app(&n),
-                                    None => installer::add_app(&default.name),
+                                    Some(n) => {
+                                        installer::add_app(&n);
+                                    }
+                                    None => {
+                                        installer::add_app(&default.name);
+                                    }
                                 }
+                                break 'outer;
                             } else {
                                 for (_k, v) in group.bin.iter() {
-                                    if line == &count.to_string() {
-                                        match v.fullname.clone() {
-                                            Some(n) => installer::add_app(&n),
-                                            None => installer::add_app(&default.name),
-                                        }
-                                        count += 1;
+                                    if v.position == 0 || v.position == 1 {
+                                        panic!("invalid position, of app {}", v.name)
                                     }
+                                    if line == &v.position.to_string() {
+                                        match v.fullname.clone() {
+                                            Some(n) => {
+                                                installer::add_app(&n);
+                                            }
+                                            None => {
+                                                installer::add_app(&default.name);
+                                            }
+                                        }
+                                        break 'outer;
+                                    }
+                                    count += 1;
                                 }
                             }
                         } else {
-                            println!("Invalid input");
+                            println!("Invalid input1");
                             continue;
                         }
                     } else if line.is_empty() {
@@ -177,7 +209,7 @@ impl Menu {
                             None => installer::add_app(&default.name),
                         }
                     } else {
-                        println!("Invalid input");
+                        println!("Invalid input2");
                         continue;
                     }
                 }
@@ -193,6 +225,7 @@ impl Menu {
                 }
             }
         }
+        Ok(())
     }
 }
 
@@ -215,6 +248,7 @@ impl Line {
         }
     }
 }
+pub fn run(c: Cli, g: Group) {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Group {
@@ -235,22 +269,22 @@ impl Group {
             category: None,
         }
     }
-    pub fn new_with_name(name: String) -> Self {
+    pub fn new_with_name(name: &str) -> Self {
         Self {
-            name: Some(name),
+            name: Some(name.to_string()),
             bin: HashMap::new(),
             description: None,
             default: None,
             category: None,
         }
     }
-    pub fn new_with_name_and_category(name: String, category: String) -> Self {
+    pub fn new_with_name_and_category(name: &str, category: &str) -> Self {
         Self {
-            name: Some(name),
+            name: Some(name.to_string()),
             bin: HashMap::new(),
             description: None,
             default: None,
-            category: Some(category),
+            category: Some(category.to_string()),
         }
     }
     pub fn new_with_category(category: String) -> Self {
@@ -273,9 +307,10 @@ impl Group {
                 self.bin.remove(&app.name);
             }
         }
+        self.default.clone().unwrap().set_position(1);
     }
-    pub fn add_app(&mut self, name: String) {
-        self.bin.insert(name.clone(), App::new(name));
+    pub fn add_app(&mut self, name: &str) {
+        self.bin.insert(name.to_string().clone(), App::new(name));
     }
     pub fn remove_app(&mut self, name: &str) {
         self.bin.remove(name);
@@ -283,8 +318,8 @@ impl Group {
     pub fn add_description(&mut self, description: String) {
         self.description = Some(description);
     }
-    pub fn add_name(&mut self, group: String) {
-        self.name = Some(group);
+    pub fn add_name(&mut self, group: &str) {
+        self.name = Some(group.to_string());
     }
 }
 
@@ -294,17 +329,17 @@ pub struct App {
     pub version: Option<String>,
     pub description: Option<String>,
     pub fullname: Option<String>,
-    position: Option<i32>,
+    position: u32,
 }
 
 impl App {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: &str) -> Self {
         Self {
-            name,
+            name: name.to_string(),
             version: None,
             description: None,
             fullname: None,
-            position: None,
+            position: 0,
         }
     }
     pub fn add_version(&mut self, version: String) {
@@ -313,8 +348,8 @@ impl App {
     pub fn add_fullname(&mut self, fullname: String) {
         self.fullname = Some(fullname);
     }
-    pub fn set_position(&mut self, position: i32) {
-        self.position = Some(position);
+    pub fn set_position(&mut self, position: u32) {
+        self.position = position;
     }
 
     pub fn add_description(&mut self, description: String) {

@@ -1,6 +1,7 @@
 use chrono::prelude::*;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use copy_dir::copy_dir;
+use menu::App;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
@@ -46,14 +47,6 @@ pub enum Group {
     All,
 }
 
-struct App {
-    name: String,
-    path: String,
-    group: String,
-}
-struct Config {
-    apps: Vec<App>,
-}
 struct Feature {
     backup: bool,
 }
@@ -71,14 +64,28 @@ fn main() {
     let mut feature = Feature::new();
     let cli = Cli::parse();
     cli::check_arguments(cli.clone());
-    match menu::menu(cli, feature) {
-        Ok(()) => {}
-        Err(e) => println!("{}", e),
-    }
+    let mut group = menu::Group::new();
+    group.add_name("editor");
+    group.add_app("neovim");
+    group.add_app("vscode");
+    group.add_app("intellij");
+    group.add_app("pycharm");
+    group.add_app("atom");
+    group.add_default(menu::App::new("neovim"));
+    let mut menu = menu::Menu::new();
+    menu.entry(group).unwrap_or_else(|err| panic!("{}", err));
 
+    // menu::run(cli, group);
     match installer::install() {
         Ok(()) => println!("continue"),
         Err(_) => println!("failed to write installer file"),
     }
     //println!(insller::app_list()
 }
+
+const _CHECK_OS: () = if cfg!(all(
+    not(target_os = "linux"),
+    not(feature = "unsupported-os")
+)) {
+    panic!("Sorry, only Linux is currently supported.");
+};
