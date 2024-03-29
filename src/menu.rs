@@ -15,6 +15,8 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process;
+use std::string::String;
+use std::usize;
 
 #[derive(Debug)]
 pub struct Menu {
@@ -122,7 +124,7 @@ impl Menu {
             }
         }
 
-        for (k, v) in group.bin.iter() {
+        for (k, _v) in group.bin.iter() {
             count += 1;
             // let line = format!("{count}. {k} ");
             //lines.push(Line::new(text, v.clone()));
@@ -138,22 +140,45 @@ impl Menu {
             match readline {
                 Ok(line) => {
                     let mut count: i32 = 2;
-
-                    if line == "1" {
+                    if is_number(line) {
+                        let len = group.bin.len() + 1;
+                        if line
+                            .parse::<usize>()
+                            .unwrap_or_else(|err| panic!("{:?}", err))
+                            >= len
+                            || line
+                                .parse::<usize>()
+                                .unwrap_or_else(|err| panic!("{:?}", err))
+                                == len
+                        {
+                            if line == "1" {
+                                match default.fullname.clone() {
+                                    Some(n) => installer::add_app(&n),
+                                    None => installer::add_app(&default.name),
+                                }
+                            } else {
+                                for (_k, v) in group.bin.iter() {
+                                    if line == &count.to_string() {
+                                        match v.fullname.clone() {
+                                            Some(n) => installer::add_app(&n),
+                                            None => installer::add_app(&default.name),
+                                        }
+                                        count += 1;
+                                    }
+                                }
+                            }
+                        } else {
+                            println!("Invalid input");
+                            continue;
+                        }
+                    } else if line.is_empty() {
                         match default.fullname.clone() {
                             Some(n) => installer::add_app(&n),
                             None => installer::add_app(&default.name),
                         }
                     } else {
-                        for (_k, v) in group.bin.iter() {
-                            if line == &count.to_string() {
-                                match v.fullname.clone() {
-                                    Some(n) => installer::add_app(&n),
-                                    None => installer::add_app(&default.name),
-                                }
-                                count += 1;
-                            }
-                        }
+                        println!("Invalid input");
+                        continue;
                     }
                 }
                 //  for (k, v) in group.bin.iter() {},
@@ -170,14 +195,24 @@ impl Menu {
         }
     }
 }
+
+fn is_number(s: &str) -> bool {
+    s.chars().all(|c| c.is_numeric())
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Line {
     text: String,
     app: App,
+    position: i32,
 }
 impl Line {
-    pub fn new(text: String, app: App) -> Self {
-        Self { text, app }
+    pub fn new(text: String, app: App, position: i32) -> Self {
+        Self {
+            text,
+            app,
+            position,
+        }
     }
 }
 
@@ -259,6 +294,7 @@ pub struct App {
     pub version: Option<String>,
     pub description: Option<String>,
     pub fullname: Option<String>,
+    position: Option<i32>,
 }
 
 impl App {
@@ -268,6 +304,7 @@ impl App {
             version: None,
             description: None,
             fullname: None,
+            position: None,
         }
     }
     pub fn add_version(&mut self, version: String) {
@@ -275,6 +312,9 @@ impl App {
     }
     pub fn add_fullname(&mut self, fullname: String) {
         self.fullname = Some(fullname);
+    }
+    pub fn set_position(&mut self, position: i32) {
+        self.position = Some(position);
     }
 
     pub fn add_description(&mut self, description: String) {
