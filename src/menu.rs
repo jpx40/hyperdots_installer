@@ -6,17 +6,18 @@ use crate::Cli;
 use crate::Feature;
 use futures::future;
 use rustyline::error::ReadlineError;
-use rustyline::{DefaultEditor, Editor, Result};
+use rustyline::{DefaultEditor, Editor};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::default;
 use std::env;
 use std::fs;
-use std::io;
+use std::io::Error;
 use std::panic;
 use std::path::{Path, PathBuf};
 use std::process;
 use std::string::String;
+use std::u32;
 use std::usize;
 
 #[derive(Debug)]
@@ -95,7 +96,7 @@ impl Menu {
             .insert(name.to_string().clone(), Group::new_with_name(name));
     }
     pub fn editor_config(&mut self) {}
-    pub fn entry(&mut self, group: Group) -> Result<()> {
+    pub fn entry(&mut self, group: Group) -> rustyline::Result<()> {
         let mut group = group;
         let mut text: String = String::new();
         //  let mut lines: Vec<Line> = Vec::new();
@@ -108,6 +109,7 @@ impl Menu {
                 default_str = "Default: 1.".to_string();
                 if default.position != 1 {
                     default.to_owned().set_position(1);
+                    default.to_owned().set_position_str("1".to_string());
                 }
                 if group.bin.contains_key(&default.name) {
                     group.remove_app(&default.name);
@@ -117,7 +119,8 @@ impl Menu {
                 let mut count = 0;
                 for (_k, v) in group.bin.iter() {
                     default = v.clone();
-                    v.to_owned().set_position(1);
+
+                    v.to_owned().set_position_str("1".to_string());
                     default_str = "Default: 1.".to_string();
                     count += 1;
                     group.to_owned().bin.remove(&default.name);
@@ -135,6 +138,13 @@ impl Menu {
             // let line = format!("{count}. {k} ");
             //lines.push(Line::new(text, v.clone()));
             v.to_owned().set_position(count);
+            match into_string(count) {
+                Ok(s) => v.to_owned().set_position_str(s),
+                Err(e) => {
+                    panic!("{:?}", e)
+                }
+            }
+
             text.push_str(&format!("{count}. {k} "));
         }
         if let Some(name) = group.name {
@@ -143,12 +153,15 @@ impl Menu {
         println!("1. {} {text}", group.default.unwrap().name);
         println!("{default_str}");
         'outer: loop {
-            let readline = &self.editor.readline(">> "); // read
+            //let mut rl = self.editor.readline(">> "); // read
+            let mut readline = DefaultEditor::new()?.readline(">> "); // read
+            println!("Line: {readline:?}"); // eval / print
             match readline {
                 Ok(line) => {
                     // let mut count: i32 = 2;
-                    let line = line.trim();
-                    if is_number(line) {
+                    let line: String = line.trim().to_string();
+                    println!("{line}");
+                    if is_number(&line) {
                         let len = group.bin.len() + 1;
                         if line.is_empty() {
                             match default.fullname.clone() {
@@ -160,17 +173,10 @@ impl Menu {
                                 }
                             }
                             break 'outer;
-                        } else if line
-                            .parse::<usize>()
-                            .unwrap_or_else(|err| panic!("{:?}", err))
-                            >= len
-                            || line
-                                .parse::<usize>()
-                                .unwrap_or_else(|err| panic!("{:?}", err))
-                                == len
-                        {
+                        } else {
                             println!("{line}");
-                            if line == "1" {
+                            if line == default.position.to_string() || line == default.position_str
+                            {
                                 match default.fullname.clone() {
                                     Some(n) => {
                                         installer::add_app(&n);
@@ -182,10 +188,11 @@ impl Menu {
                                 break 'outer;
                             } else {
                                 for (_k, v) in group.bin.iter() {
-                                    if v.position == 0 || v.position == 1 {
-                                        panic!("invalid position, of app {}", v.name)
-                                    }
-                                    if line == &v.position.to_string() {
+                                    // if v.position == 0 || v.position == 1 {
+                                    //     panic!("invalid position, of app {}", v.name)
+                                    // }
+                                    let test: String = format!("{}", v.position);
+                                    if line == v.position.to_string() || line == test {
                                         match v.fullname.clone() {
                                             Some(n) => {
                                                 installer::add_app(&n);
@@ -199,9 +206,6 @@ impl Menu {
                                     count += 1;
                                 }
                             }
-                        } else {
-                            println!("Invalid input1");
-                            continue;
                         }
                     } else if line.is_empty() {
                         match default.fullname.clone() {
@@ -227,6 +231,44 @@ impl Menu {
         }
         Ok(())
     }
+}
+
+fn into_string(n: u32) -> Result<String, String> {
+    let mut s = String::new();
+    match n {
+        1 => s.push_str("1"),
+        2 => s.push_str("2"),
+        3 => s.push_str("3"),
+        4 => s.push_str("4"),
+        5 => s.push_str("5"),
+        6 => s.push_str("6"),
+        7 => s.push_str("7"),
+        8 => s.push_str("8"),
+        9 => s.push_str("9"),
+        10 => s.push_str("10"),
+        11 => s.push_str("11"),
+        12 => s.push_str("12"),
+        13 => s.push_str("13"),
+        14 => s.push_str("14"),
+        15 => s.push_str("15"),
+        16 => s.push_str("16"),
+        17 => s.push_str("17"),
+        18 => s.push_str("18"),
+        19 => s.push_str("19"),
+        20 => s.push_str("20"),
+        21 => s.push_str("21"),
+        22 => s.push_str("22"),
+        23 => s.push_str("23"),
+        24 => s.push_str("24"),
+        25 => s.push_str("25"),
+        26 => s.push_str("26"),
+        27 => s.push_str("27"),
+        28 => s.push_str("28"),
+        29 => s.push_str("29"),
+        30 => s.push_str("30"),
+        _ => return Err("invalid number".to_string()),
+    }
+    Ok(s)
 }
 
 fn is_number(s: &str) -> bool {
@@ -330,6 +372,7 @@ pub struct App {
     pub description: Option<String>,
     pub fullname: Option<String>,
     position: u32,
+    position_str: String,
 }
 
 impl App {
@@ -340,10 +383,14 @@ impl App {
             description: None,
             fullname: None,
             position: 0,
+            position_str: String::new(),
         }
     }
     pub fn add_version(&mut self, version: String) {
         self.version = Some(version);
+    }
+    pub fn set_position_str(&mut self, position_str: String) {
+        self.position_str = position_str;
     }
     pub fn add_fullname(&mut self, fullname: String) {
         self.fullname = Some(fullname);
@@ -357,7 +404,7 @@ impl App {
     }
 }
 
-pub fn menu(c: Cli, f: Feature) -> Result<()> {
+pub fn menu(c: Cli, f: Feature) -> rustyline::Result<()> {
     env_logger::init();
     let mut rl = DefaultEditor::new()?;
 
