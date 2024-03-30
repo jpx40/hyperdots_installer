@@ -1,4 +1,4 @@
-use crate::installer::AppList;
+use crate::installer::{AppList, Dependency};
 use chrono::Local;
 use copy_dir::copy_dir;
 use rhai::{Engine, EvalAltResult, Scope};
@@ -8,14 +8,24 @@ use std::io;
 use std::io::Read;
 use std::path::Path;
 
-pub fn read_app_list() -> Result<AppList, toml::de::Error> {
-    let file = Path::new("app_list.toml");
+pub fn read_app_list(file: &str) -> Result<AppList, toml::de::Error> {
+    let file = Path::new(file);
     let mut pkg_str = String::new();
     File::open(file)
         .unwrap()
         .read_to_string(&mut pkg_str)
         .unwrap();
     let app_list: AppList = toml::from_str(&pkg_str)?;
+    Ok(app_list)
+}
+pub fn read_dep_list(file: &str) -> Result<Dependency, toml::de::Error> {
+    let file = Path::new(file);
+    let mut pkg_str = String::new();
+    File::open(file)
+        .unwrap()
+        .read_to_string(&mut pkg_str)
+        .unwrap();
+    let app_list: Dependency = toml::from_str(&pkg_str)?;
     Ok(app_list)
 }
 
@@ -88,4 +98,44 @@ pub fn backup(backup_path: &str, backup: bool) -> Result<(), io::Error> {
         copy_dir(target, backup_dir)?;
     }
     Ok(())
+}
+pub fn is_number(s: &str) -> bool {
+    s.chars().all(|c| c.is_numeric())
+}
+pub fn into_string(n: u32) -> Result<String, String> {
+    let mut s = String::new();
+    match n {
+        1 => s.push_str("1"),
+        2 => s.push_str("2"),
+        3 => s.push_str("3"),
+        4 => s.push_str("4"),
+        5 => s.push_str("5"),
+        6 => s.push_str("6"),
+        7 => s.push_str("7"),
+        8 => s.push_str("8"),
+        9 => s.push_str("9"),
+        10 => s.push_str("10"),
+        11 => s.push_str("11"),
+        12 => s.push_str("12"),
+        13 => s.push_str("13"),
+        14 => s.push_str("14"),
+        15 => s.push_str("15"),
+        16 => s.push_str("16"),
+        17 => s.push_str("17"),
+        18 => s.push_str("18"),
+        19 => s.push_str("19"),
+        20 => s.push_str("20"),
+        21 => s.push_str("21"),
+        22 => s.push_str("22"),
+        23 => s.push_str("23"),
+        24 => s.push_str("24"),
+        25 => s.push_str("25"),
+        26 => s.push_str("26"),
+        27 => s.push_str("27"),
+        28 => s.push_str("28"),
+        29 => s.push_str("29"),
+        30 => s.push_str("30"),
+        _ => return Err("invalid number".to_string()),
+    }
+    Ok(s)
 }

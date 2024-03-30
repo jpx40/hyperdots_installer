@@ -1,3 +1,4 @@
+use crate::conf;
 use crate::utils::{self, read_app_list};
 use alpm;
 use home::home_dir;
@@ -14,7 +15,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-type Extra = Option<HashMap<String, HashMap<String, HashMap<String, bool>>>>;
+type Extra = HashMap<String, HashMap<String, bool>>;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 struct Kategorie(Option<HashMap<String, Option<HashMap<String, bool>>>>);
@@ -31,6 +32,12 @@ pub struct AppList {
     pub hyperdots: Option<HashMap<String, bool>>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct Dependency {
+    pub dependency: Option<HashMap<String, bool>>,
+    pub extra: Option<HashMap<String, HashMap<String, bool>>>,
+}
+
 // #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 // enum Extra {
 //     HashMap,
@@ -38,7 +45,12 @@ pub struct AppList {
 // }
 
 lazy_static! {
-    static ref APP_LIST: AppList = utils::read_app_list().unwrap_or_else(|err| panic!("{}", err));
+    static ref APP_LIST: AppList =
+        utils::read_app_list(&conf::CONF.app_file).unwrap_or_else(|err| panic!("{}", err));
+}
+lazy_static! {
+    static ref DEPENDENCIES: Dependency =
+        utils::read_dep_list(&conf::CONF.dep_file).unwrap_or_else(|err| panic!("{}", err));
 }
 
 // https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton
@@ -66,12 +78,14 @@ pub fn install_all() {}
 
 pub fn install_from_config() {
     let app_list = APP_LIST.clone();
+    let dep_list = DEPENDENCIES.clone();
     add_app_key(app_list.system);
     add_app_key(app_list.displaymanager);
     add_app_key(app_list.theming);
     add_app_key(app_list.hyperdots);
     add_app_key(app_list.dependicies);
-    add_app_key(app_list.shell);
+    add_app_key(dep_list.dependency.clone());
+    add_extra_deps(dep_list);
     install_applications();
 }
 pub fn add_app_key(app: Option<HashMap<String, bool>>) {
@@ -132,41 +146,50 @@ pub enum EditorList {
 
 fn install_applications() {
     let app_list = APP_LIST.clone();
-    add_extra_deps(app_list, "application", "apps")
+    add_extra(app_list, "application")
 }
 pub fn install_editor(editor: EditorList) {
     let app_list = APP_LIST.clone();
+}
+//     match editor {
+//         EditorList::Intellij => add_app("intellij-idea-community-edition"),
+//         EditorList::VsCode => add_app("visual-studio-code-bin"),
+//         EditorList::Code => add_app("code"),
+//         EditorList::Neovim => {
+//             add_extra_deps(app_list, "neovim", "editor");
+//         }
+//         EditorList::Any => {
+//             add_extra_deps(app_list, "any", "editor");
+//         }
+//     }
+// }
 
-    match editor {
-        EditorList::Intellij => add_app("intellij-idea-community-edition"),
-        EditorList::VsCode => add_app("visual-studio-code-bin"),
-        EditorList::Code => add_app("code"),
-        EditorList::Neovim => {
-            add_extra_deps(app_list, "neovim", "editor");
-        }
-        EditorList::Any => {
-            add_extra_deps(app_list, "any", "editor");
+fn add_extra(app_list: AppList, app: &str) {
+    if let Some(apps) = app_list.extra {
+        for (k, v) in apps.clone() {
+            if k == app {
+                v.iter().for_each(|(k, v)| {
+                    if *v {
+                        add_app(k);
+                    }
+                });
+                if app != "any" {
+                    break;
+                }
+            }
         }
     }
 }
 
-fn add_extra_deps(app_list: AppList, app: &str, kategorie: &str) {
-    if let Some(apps) = app_list.extra {
-        for (k, v) in apps.clone().unwrap() {
-            if kategorie == k {
-                for (ak, av) in v {
-                    if ak == app || app == "any" {
-                        av.iter().for_each(|(k, v)| {
-                            if *v {
-                                add_app(k);
-                            }
-                        });
-                        if app != "any" {
-                            break;
-                        }
+fn add_extra_deps(dep_list: Dependency) {
+    if let Some(apps) = dep_list.extra {
+        for (k, v) in apps.clone() {
+            if app_array().lock().unwrap().contains(&k) {
+                v.iter().for_each(|(k, v)| {
+                    if *v {
+                        add_app(k);
                     }
-                }
-                break;
+                });
             }
         }
     }

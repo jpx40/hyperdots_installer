@@ -61,9 +61,10 @@ impl Feature {
 
 //struct Commands {}
 fn main() {
+    let config = conf::Config::new("", "", "app_list.toml", "deps.toml");
     let mut feature = Feature::new();
     let cli = Cli::parse();
-    cli::check_arguments(cli.clone());
+
     let mut group = menu::Group::new();
     group.add_name("editor");
     group.add_app("neovim");
@@ -71,10 +72,12 @@ fn main() {
     group.add_app("intellij");
     group.add_app("pycharm");
     group.add_app("atom");
+    group.add_app("code");
     group.add_default(menu::App::new("neovim"));
     let mut menu = menu::Menu::new();
-    menu.entry(group).unwrap_or_else(|err| panic!("{}", err));
 
+    menu.entry(group).unwrap_or_else(|err| panic!("{}", err));
+    cli::check_arguments(cli.clone());
     //menu::run(cli, group);
     match installer::install() {
         Ok(()) => println!("continue"),

@@ -100,7 +100,7 @@ impl Menu {
             .insert(name.to_string().clone(), Group::new_with_name(name));
     }
     pub fn editor_config(&mut self) {}
-    pub fn entry(&mut self, group: Group) -> reedline::Result<()> {
+    pub fn entry(&mut self, group: Group) -> rustyline::Result<()> {
         let mut group = group;
         let mut text: String = String::new();
         //  let mut lines: Vec<Line> = Vec::new();
@@ -146,7 +146,7 @@ impl Menu {
             // let line = format!("{count}. {k} ");
             //lines.push(Line::new(text, v.clone()));
             v.to_owned().set_position(count);
-            match into_string(count) {
+            match utils::into_string(count) {
                 Ok(s) => {
                     // v.to_owned().set_position_str(s);
                     position_str.insert(k.to_string(), s);
@@ -170,14 +170,15 @@ impl Menu {
         'outer: loop {
             //let mut rl = self.editor.readline(">> "); // read
             //   let mut readline = ::new()?.readline(">> "); // read
-            let sig = line_editor.read_line(&prompt);
+            let editor_prompt = ">>";
+            let sig = self.editor.readline(editor_prompt);
             println!("Line: {sig:?}"); // eval / print
             match sig {
-                Ok(Signal::Success(line)) => {
+                Ok(line) => {
                     // let mut count: i32 = 2;
                     let line: String = line.trim().to_string();
                     println!("{line}1");
-                    if is_number(&line) {
+                    if utils::is_number(&line) {
                         let len = group.bin.len() + 1;
                         if line.is_empty() {
                             match default.fullname.clone() {
@@ -242,7 +243,11 @@ impl Menu {
                     }
                 }
                 //  for (k, v) in group.bin.iter() {},
-                Ok(Signal::CtrlD) | Ok(Signal::CtrlC) => {
+                Err(ReadlineError::Interrupted) => {
+                    println!("\nAborted!");
+                    process::exit(0);
+                }
+                Err(ReadlineError::Eof) => {
                     println!("\nAborted!");
                     process::exit(0);
                 }
@@ -255,48 +260,6 @@ impl Menu {
         }
         Ok(())
     }
-}
-
-fn into_string(n: u32) -> Result<String, String> {
-    let mut s = String::new();
-    match n {
-        1 => s.push_str("1"),
-        2 => s.push_str("2"),
-        3 => s.push_str("3"),
-        4 => s.push_str("4"),
-        5 => s.push_str("5"),
-        6 => s.push_str("6"),
-        7 => s.push_str("7"),
-        8 => s.push_str("8"),
-        9 => s.push_str("9"),
-        10 => s.push_str("10"),
-        11 => s.push_str("11"),
-        12 => s.push_str("12"),
-        13 => s.push_str("13"),
-        14 => s.push_str("14"),
-        15 => s.push_str("15"),
-        16 => s.push_str("16"),
-        17 => s.push_str("17"),
-        18 => s.push_str("18"),
-        19 => s.push_str("19"),
-        20 => s.push_str("20"),
-        21 => s.push_str("21"),
-        22 => s.push_str("22"),
-        23 => s.push_str("23"),
-        24 => s.push_str("24"),
-        25 => s.push_str("25"),
-        26 => s.push_str("26"),
-        27 => s.push_str("27"),
-        28 => s.push_str("28"),
-        29 => s.push_str("29"),
-        30 => s.push_str("30"),
-        _ => return Err("invalid number".to_string()),
-    }
-    Ok(s)
-}
-
-fn is_number(s: &str) -> bool {
-    s.chars().all(|c| c.is_numeric())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -323,6 +286,7 @@ pub struct Group {
     pub description: Option<String>,
     pub default: Option<App>,
     pub category: Option<String>,
+    pub installer: Option<String>,
 }
 
 impl Group {
@@ -333,6 +297,7 @@ impl Group {
             description: None,
             default: None,
             category: None,
+            installer: None,
         }
     }
     pub fn new_with_name(name: &str) -> Self {
@@ -342,6 +307,7 @@ impl Group {
             description: None,
             default: None,
             category: None,
+            installer: None,
         }
     }
     pub fn new_with_name_and_category(name: &str, category: &str) -> Self {
@@ -351,6 +317,7 @@ impl Group {
             description: None,
             default: None,
             category: Some(category.to_string()),
+            installer: None,
         }
     }
     pub fn new_with_category(category: String) -> Self {
@@ -360,9 +327,12 @@ impl Group {
             description: None,
             default: None,
             category: Some(category),
+            installer: None,
         }
     }
-
+    pub fn set_installer(&mut self, installer: String) {
+        self.installer = Some(installer);
+    }
     pub fn add(&mut self, app: App) {
         self.bin.insert(app.name.clone(), app);
     }
