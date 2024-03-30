@@ -5,6 +5,8 @@ use crate::utils;
 use crate::Cli;
 use crate::Feature;
 use futures::future;
+use reedline;
+use reedline::{DefaultPrompt, Reedline, Signal};
 use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, Editor};
 use serde::{Deserialize, Serialize};
@@ -96,7 +98,7 @@ impl Menu {
             .insert(name.to_string().clone(), Group::new_with_name(name));
     }
     pub fn editor_config(&mut self) {}
-    pub fn entry(&mut self, group: Group) -> rustyline::Result<()> {
+    pub fn entry(&mut self, group: Group) -> reedline::Result<()> {
         let mut group = group;
         let mut text: String = String::new();
         //  let mut lines: Vec<Line> = Vec::new();
@@ -152,12 +154,17 @@ impl Menu {
         }
         println!("1. {} {text}", group.default.unwrap().name);
         println!("{default_str}");
+
+        let mut line_editor = Reedline::create();
+        let prompt = DefaultPrompt::default();
+
         'outer: loop {
             //let mut rl = self.editor.readline(">> "); // read
-            let mut readline = DefaultEditor::new()?.readline(">> "); // read
-            println!("Line: {readline:?}"); // eval / print
-            match readline {
-                Ok(line) => {
+            //   let mut readline = ::new()?.readline(">> "); // read
+            let sig = line_editor.read_line(&prompt);
+            println!("Line: {sig:?}"); // eval / print
+            match sig {
+                Ok(Signal::Success(line)) => {
                     // let mut count: i32 = 2;
                     let line: String = line.trim().to_string();
                     println!("{line}");
@@ -192,7 +199,7 @@ impl Menu {
                                     //     panic!("invalid position, of app {}", v.name)
                                     // }
                                     let test: String = format!("{}", v.position);
-                                    if line == v.position.to_string() || line == test {
+                                    if format!("{line}") == v.position.to_string() {
                                         match v.fullname.clone() {
                                             Some(n) => {
                                                 installer::add_app(&n);
@@ -218,8 +225,8 @@ impl Menu {
                     }
                 }
                 //  for (k, v) in group.bin.iter() {},
-                Err(ReadlineError::Interrupted) => {
-                    println!("CTRL-C");
+                Ok(Signal::CtrlD) | Ok(Signal::CtrlC) => {
+                    println!("\nAborted!");
                     process::exit(0);
                 }
 
