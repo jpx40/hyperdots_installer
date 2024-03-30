@@ -75,11 +75,14 @@ fn main() {
     let mut menu = menu::Menu::new();
     menu.entry(group).unwrap_or_else(|err| panic!("{}", err));
 
-    // menu::run(cli, group);
+    //menu::run(cli, group);
     match installer::install() {
         Ok(()) => println!("continue"),
         Err(_) => println!("failed to write installer file"),
     }
+    let out =
+        utils::check("1".to_string(), "1".to_string()).unwrap_or_else(|err| panic!("{}", err));
+    println!("{}", out);
     //println!(insller::app_list()
 }
 

@@ -5,6 +5,8 @@ use crate::utils;
 use crate::Cli;
 use crate::Feature;
 use futures::future;
+
+use itertools::Position;
 use reedline;
 use reedline::{DefaultPrompt, Reedline, Signal};
 use rustyline::error::ReadlineError;
@@ -104,7 +106,9 @@ impl Menu {
         //  let mut lines: Vec<Line> = Vec::new();
         let mut default: App = App::new("Neovim");
         let mut default_str: String = String::new();
-
+        let mut default_position: u32 = 1;
+        let mut default_position_str: String = String::new();
+        let mut position_str: HashMap<String, String> = HashMap::new();
         match group.default.clone() {
             Some(d) => {
                 default = d;
@@ -112,6 +116,7 @@ impl Menu {
                 if default.position != 1 {
                     default.to_owned().set_position(1);
                     default.to_owned().set_position_str("1".to_string());
+                    default_position_str = "1".to_string();
                 }
                 if group.bin.contains_key(&default.name) {
                     group.remove_app(&default.name);
@@ -123,6 +128,7 @@ impl Menu {
                     default = v.clone();
 
                     v.to_owned().set_position_str("1".to_string());
+                    default_position_str = "1".to_string();
                     default_str = "Default: 1.".to_string();
                     count += 1;
                     group.to_owned().bin.remove(&default.name);
@@ -141,7 +147,10 @@ impl Menu {
             //lines.push(Line::new(text, v.clone()));
             v.to_owned().set_position(count);
             match into_string(count) {
-                Ok(s) => v.to_owned().set_position_str(s),
+                Ok(s) => {
+                    // v.to_owned().set_position_str(s);
+                    position_str.insert(k.to_string(), s);
+                }
                 Err(e) => {
                     panic!("{:?}", e)
                 }
@@ -167,7 +176,7 @@ impl Menu {
                 Ok(Signal::Success(line)) => {
                     // let mut count: i32 = 2;
                     let line: String = line.trim().to_string();
-                    println!("{line}");
+                    println!("{line}1");
                     if is_number(&line) {
                         let len = group.bin.len() + 1;
                         if line.is_empty() {
@@ -181,8 +190,15 @@ impl Menu {
                             }
                             break 'outer;
                         } else {
-                            println!("{line}");
-                            if line == default.position.to_string() || line == default.position_str
+                            println!("{line}2");
+                            println!("{}", default.position_str);
+                            let out = utils::check(line.clone(), default.position_str.to_string())
+                                .unwrap_or_else(|err| panic!("{}", err));
+                            if line == default.position.to_string()
+                                // || line == default.position_str
+                                // || out
+                                // || default.position_str == line
+                                || line == "1"
                             {
                                 match default.fullname.clone() {
                                     Some(n) => {
@@ -194,18 +210,19 @@ impl Menu {
                                 }
                                 break 'outer;
                             } else {
-                                for (_k, v) in group.bin.iter() {
+                                for (_k, v) in group.bin.clone().iter() {
                                     // if v.position == 0 || v.position == 1 {
                                     //     panic!("invalid position, of app {}", v.name)
                                     // }
                                     let test: String = format!("{}", v.position);
-                                    if format!("{line}") == v.position.to_string() {
+                                    if &line == position_str.get(&v.name).unwrap() {
                                         match v.fullname.clone() {
                                             Some(n) => {
+                                                println!("add app {}", n);
                                                 installer::add_app(&n);
                                             }
                                             None => {
-                                                installer::add_app(&default.name);
+                                                installer::add_app(&v.name);
                                             }
                                         }
                                         break 'outer;
