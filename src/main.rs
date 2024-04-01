@@ -61,6 +61,7 @@ impl Feature {
 
 //struct Commands {}
 fn main() {
+    println!("\n");
     let config = conf::Config::new("", "", "app_list.toml", "deps.toml");
     let mut feature = Feature::new();
     let cli = Cli::parse();

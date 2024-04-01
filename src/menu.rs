@@ -159,14 +159,14 @@ impl Menu {
             text.push_str(&format!("{count}. {k}, "));
         }
         if let Some(name) = group.name {
-            println!("{name}");
+            println!("{}", name.to_uppercase());
         }
         let mut s = &text[0..text.len() - 2];
         //  s.remove(-2);
         println!("1. {}, {s} | {default_str}", group.default.unwrap().name);
 
-        let mut line_editor = Reedline::create();
-        let prompt = DefaultPrompt::default();
+        // let mut line_editor = Reedline::create();
+        // let prompt = DefaultPrompt::default();
 
         'outer: loop {
             //let mut rl = self.editor.readline(">> "); // read
