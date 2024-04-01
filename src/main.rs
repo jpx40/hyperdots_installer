@@ -83,9 +83,7 @@ fn main() {
         Ok(()) => println!("continue"),
         Err(_) => println!("failed to write installer file"),
     }
-    let out =
-        utils::check("1".to_string(), "1".to_string()).unwrap_or_else(|err| panic!("{}", err));
-    println!("{}", out);
+
     //println!(insller::app_list()
 }
 

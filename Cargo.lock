@@ -1297,6 +1297,7 @@ dependencies = [
  "regex",
  "rhai",
  "rustyline",
+ "scopeguard",
  "serde",
  "serde_json",
  "smol",

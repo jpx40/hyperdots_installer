@@ -156,13 +156,14 @@ impl Menu {
                 }
             }
 
-            text.push_str(&format!("{count}. {k} "));
+            text.push_str(&format!("{count}. {k}, "));
         }
         if let Some(name) = group.name {
             println!("{name}");
         }
-        println!("1. {} {text}", group.default.unwrap().name);
-        println!("{default_str}");
+        let mut s = &text[0..text.len() - 2];
+        //  s.remove(-2);
+        println!("1. {}, {s} | {default_str}", group.default.unwrap().name);
 
         let mut line_editor = Reedline::create();
         let prompt = DefaultPrompt::default();
@@ -172,14 +173,13 @@ impl Menu {
             //   let mut readline = ::new()?.readline(">> "); // read
             let editor_prompt = ">>";
             let sig = self.editor.readline(editor_prompt);
-            println!("Line: {sig:?}"); // eval / print
+
             match sig {
                 Ok(line) => {
                     // let mut count: i32 = 2;
                     let line: String = line.trim().to_string();
-                    println!("{line}1");
+
                     if utils::is_number(&line) {
-                        let len = group.bin.len() + 1;
                         if line.is_empty() {
                             match default.fullname.clone() {
                                 Some(n) => {
@@ -191,16 +191,14 @@ impl Menu {
                             }
                             break 'outer;
                         } else {
-                            println!("{line}2");
-                            println!("{}", default.position_str);
-                            let out = utils::check(line.clone(), default.position_str.to_string())
-                                .unwrap_or_else(|err| panic!("{}", err));
-                            if line == default.position.to_string()
-                                // || line == default.position_str
-                                // || out
-                                // || default.position_str == line
-                                || line == "1"
-                            {
+                            let check = line
+                                .parse::<usize>()
+                                .unwrap_or_else(|err| panic!("{:?}", err));
+
+                            if check >= group.bin.len() {
+                                println!("invalid Input")
+                            }
+                            if line == default.position.to_string() || line == "1" {
                                 match default.fullname.clone() {
                                     Some(n) => {
                                         installer::add_app(&n);
@@ -238,7 +236,7 @@ impl Menu {
                             None => installer::add_app(&default.name),
                         }
                     } else {
-                        println!("Invalid input2");
+                        println!("Invalid input");
                         continue;
                     }
                 }
