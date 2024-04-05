@@ -191,6 +191,7 @@ impl Menu {
                     }
                     let mut result: Vec<String> = Vec::new();
                     if line.contains(",") {
+                        let line = line.trim();
                         result = line.split(",").map(|s| s.trim().to_string()).collect();
                     }
                     if line.contains(" ") {
@@ -198,6 +199,15 @@ impl Menu {
                     } else {
                         result.push(line.clone());
                     }
+                    let mut check: u16 = 0;
+                    // for line in result.clone() {
+                    //     if !utils::is_number(&line) {
+                    //         println!("invalid Input");
+                    //
+                    //         break 'outer;
+                    //     }
+                    // }
+
                     for line in result {
                         if utils::is_number(&line) {
                             let check = line
@@ -236,16 +246,9 @@ impl Menu {
                                     count += 1;
                                 }
                             }
-                        } else if line.is_empty() {
-                            match default.fullname.clone() {
-                                Some(n) => installer::add_app(&n),
-                                None => installer::add_app(&default.name),
-                            }
-                        } else {
-                            println!("Invalid input");
-                            continue;
                         }
                     }
+                    break 'outer;
                 }
                 //  for (k, v) in group.bin.iter() {},
                 Err(ReadlineError::Interrupted) => {
@@ -402,5 +405,3 @@ impl App {
         self.description = Some(description);
     }
 }
-
-
