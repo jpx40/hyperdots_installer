@@ -200,13 +200,13 @@ impl Menu {
                         result.push(line.clone());
                     }
                     let mut check: u16 = 0;
-                    // for line in result.clone() {
-                    //     if !utils::is_number(&line) {
-                    //         println!("invalid Input");
-                    //
-                    //         break 'outer;
-                    //     }
-                    // }
+                    for line in result.clone() {
+                        if !utils::is_number(&line) {
+                            println!("invalid Input");
+                            //process::exit(0);
+                            break 'outer;
+                        }
+                    }
 
                     for line in result {
                         if utils::is_number(&line) {
