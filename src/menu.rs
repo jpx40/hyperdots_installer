@@ -20,6 +20,7 @@ use std::io::Error;
 use std::panic;
 use std::path::{Path, PathBuf};
 use std::process;
+use std::result;
 use std::string::String;
 use std::u32;
 use std::usize;
@@ -172,25 +173,33 @@ impl Menu {
             //let mut rl = self.editor.readline(">> "); // read
             //   let mut readline = ::new()?.readline(">> "); // read
             let editor_prompt = ">>";
-            let sig = self.editor.readline(editor_prompt);
+            let line = self.editor.readline(editor_prompt);
 
-            match sig {
+            match line {
                 Ok(line) => {
                     // let mut count: i32 = 2;
-                    let line: String = line.trim().to_string();
-
-                    if utils::is_number(&line) {
-                        if line.is_empty() {
-                            match default.fullname.clone() {
-                                Some(n) => {
-                                    installer::add_app(&n);
-                                }
-                                None => {
-                                    installer::add_app(&default.name);
-                                }
+                    if line.is_empty() {
+                        match default.fullname.clone() {
+                            Some(n) => {
+                                installer::add_app(&n);
                             }
-                            break 'outer;
-                        } else {
+                            None => {
+                                installer::add_app(&default.name);
+                            }
+                        }
+                        break 'outer;
+                    }
+                    let mut result: Vec<String> = Vec::new();
+                    if line.contains(",") {
+                        result = line.split(",").map(|s| s.trim().to_string()).collect();
+                    }
+                    if line.contains(" ") {
+                        result = line.split(" ").map(|s| s.trim().to_string()).collect();
+                    } else {
+                        result.push(line.clone());
+                    }
+                    for line in result {
+                        if utils::is_number(&line) {
                             let check = line
                                 .parse::<usize>()
                                 .unwrap_or_else(|err| panic!("{:?}", err));
@@ -207,7 +216,6 @@ impl Menu {
                                         installer::add_app(&default.name);
                                     }
                                 }
-                                break 'outer;
                             } else {
                                 for (_k, v) in group.bin.clone().iter() {
                                     // if v.position == 0 || v.position == 1 {
@@ -224,20 +232,19 @@ impl Menu {
                                                 installer::add_app(&v.name);
                                             }
                                         }
-                                        break 'outer;
                                     }
                                     count += 1;
                                 }
                             }
+                        } else if line.is_empty() {
+                            match default.fullname.clone() {
+                                Some(n) => installer::add_app(&n),
+                                None => installer::add_app(&default.name),
+                            }
+                        } else {
+                            println!("Invalid input");
+                            continue;
                         }
-                    } else if line.is_empty() {
-                        match default.fullname.clone() {
-                            Some(n) => installer::add_app(&n),
-                            None => installer::add_app(&default.name),
-                        }
-                    } else {
-                        println!("Invalid input");
-                        continue;
                     }
                 }
                 //  for (k, v) in group.bin.iter() {},

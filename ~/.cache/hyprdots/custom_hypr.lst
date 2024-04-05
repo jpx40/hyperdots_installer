@@ -1,1 +1,1 @@
-export INSTALL_NEOVIM="true"
+export INSTALL_NEOVIM="false"
