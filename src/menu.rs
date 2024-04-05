@@ -7,6 +7,7 @@ use crate::Feature;
 use futures::future;
 
 use itertools::Position;
+use rayon::result;
 use reedline;
 use reedline::{DefaultPrompt, Reedline, Signal};
 use rustyline::error::ReadlineError;
@@ -20,7 +21,6 @@ use std::io::Error;
 use std::panic;
 use std::path::{Path, PathBuf};
 use std::process;
-use std::result;
 use std::string::String;
 use std::u32;
 use std::usize;
@@ -200,11 +200,37 @@ impl Menu {
                         result.push(line.clone());
                     }
                     let mut check: u16 = 0;
+                    result = result
+                        .iter()
+                        .filter(|s| !s.is_empty())
+                        .map(|s| s.to_string())
+                        .collect();
                     for line in result.clone() {
                         if !utils::is_number(&line) {
-                            println!("invalid Input");
+                            let mut debug = String::new();
+                            if &line == "1" {
+                                debug = default.name.clone();
+                            } else {
+                                for (_k, v) in group.bin.clone().iter() {
+                                    // if v.position == 0 || v.position == 1 {
+                                    //     panic!("invalid position, of app {}", v.name)
+                                    // }
+                                    let test: String = format!("{}", v.position);
+                                    if &line == position_str.get(&v.name).unwrap() {
+                                        match v.fullname.clone() {
+                                            Some(n) => {
+                                                println!("add app {}", n);
+                                                debug = n;
+                                            }
+                                            None => {}
+                                        }
+                                    }
+                                }
+                            }
+
+                            //println!("invalid Input {}", debug);
                             //process::exit(0);
-                            break 'outer;
+                            //     break 'outer;
                         }
                     }
 
