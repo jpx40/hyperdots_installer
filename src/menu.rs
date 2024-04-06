@@ -4,7 +4,6 @@ use crate::installer::EditorList;
 use crate::utils;
 use crate::Cli;
 use crate::Feature;
-use futures::future;
 use itertools::Position;
 use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, Editor};

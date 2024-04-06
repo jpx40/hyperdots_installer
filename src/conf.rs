@@ -3,8 +3,10 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::env;
 pub fn check_arguments_from_config() {}
+use std::sync::{Arc, RwLock};
+use std::sync::{Mutex, OnceLock};
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     pub config_file: String,
     pub config_dir: String,
@@ -22,7 +24,14 @@ pub struct Config {
 // }
 
 lazy_static! {
-    pub static ref CONF: Config = Config::new("", "", "app_list.toml", "deps.toml");
+    pub static ref CONF: Mutex<Config> =
+        Mutex::new(Config::new("", "", "app_list.toml", "deps.toml"));
+}
+
+static GLOBAL_CONF: Mutex<Option<Config>> = Mutex::new(None);
+
+lazy_static! {
+    pub static ref CURRENT_CONFIG: RwLock<Arc<Config>> = RwLock::new(Default::default());
 }
 
 impl Config {

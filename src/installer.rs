@@ -1,9 +1,7 @@
 use crate::utils::{self, read_app_list};
 use crate::{conf, menu};
-use alpm::{self, Group, Version};
 use home::home_dir;
 use lazy_static::lazy_static;
-use rhai::OptimizationLevel;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::create_dir_all;
@@ -20,9 +18,9 @@ type Extra = HashMap<String, HashMap<String, Option<AppConf>>>;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct AppConf {
-    install: Option<bool>,
-    version: Option<String>,
-    fullname: Option<String>,
+    pub install: Option<bool>,
+    pub version: Option<String>,
+    pub fullname: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
@@ -53,12 +51,13 @@ pub struct Dependency {
 // }
 
 lazy_static! {
-    static ref APP_LIST: AppList =
-        utils::read_app_list(&conf::CONF.app_file).unwrap_or_else(|err| panic!("{}", err));
+    pub static ref APP_LIST: AppList = utils::read_app_list(&conf::CONF.lock().unwrap().dep_file)
+        .unwrap_or_else(|err| panic!("{}", err));
 }
 lazy_static! {
-    static ref DEPENDENCIES: Dependency =
-        utils::read_dep_list(&conf::CONF.dep_file).unwrap_or_else(|err| panic!("{}", err));
+    pub static ref DEPENDENCIES: Dependency =
+        utils::read_dep_list(&conf::CONF.lock().unwrap().app_file)
+            .unwrap_or_else(|err| panic!("{}", err));
 }
 
 // https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton
@@ -133,7 +132,7 @@ fn write_to_file() {
         add_line(r#"export INSTALL_NEOVIM="false""#);
     }
 }
-pub fn install() -> Result<(), String> {
+pub fn install(out: String) -> Result<(), String> {
     write_to_file();
     let path: PathBuf = env::current_dir().unwrap();
 
@@ -141,8 +140,8 @@ pub fn install() -> Result<(), String> {
         create_dir_all(Path::new("~/.cache/hyprdots")).unwrap_or_else(|err| panic!("{}", err));
     }
     let cache_path = Path::new("~/.cache/hyprdots/");
-    let mut file: File = File::create(cache_path.join("custom_hypr.lst")).unwrap();
-    let mut app_file: File = File::create(path.join("custom_hypr.lst")).unwrap();
+    let mut file: File = File::create(cache_path.join(out.clone())).unwrap();
+    let mut app_file: File = File::create(path.join(out)).unwrap();
     file.write_all(params_file().lock().unwrap().as_bytes())
         .unwrap_or_else(|err| panic!("{}", err));
     for app in app_array().lock().unwrap().iter() {

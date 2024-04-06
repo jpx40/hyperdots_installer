@@ -1,7 +1,7 @@
 use crate::installer::{AppList, Dependency};
 use chrono::Local;
 use copy_dir::copy_dir;
-use rhai::{Engine, EvalAltResult, Scope};
+
 use std::collections::HashMap;
 use std::fs::File;
 use std::io;
@@ -29,21 +29,6 @@ pub fn read_dep_list(file: &str) -> Result<Dependency, toml::de::Error> {
     Ok(app_list)
 }
 
-pub fn check(line: String, position: String) -> Result<bool, Box<EvalAltResult>>
-//                          ^^^^^^^^^^^^^^^^^^
-//                          Rhai API error type
-{
-    // Create an 'Engine'
-    let engine = Engine::new();
-
-    // Your first Rhai Script
-    let script = "fn check(x, y) {if x == y { return true } else { return false } };";
-    let mut scope = Scope::new();
-    let ast = engine.compile(script)?;
-    scope.push(line.clone(), position.clone());
-    let name = "check";
-    engine.call_fn::<bool>(&mut scope, &ast, name, (line, position))
-}
 //
 // pub fn check() -> PyResult<()> {
 //     let key1 = "key1";
