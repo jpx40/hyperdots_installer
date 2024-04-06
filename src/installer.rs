@@ -266,8 +266,22 @@ fn add_extra_deps(dep_list: Dependency) {
         for (k, v) in apps.clone() {
             if app_array().lock().unwrap().contains(&k) {
                 v.iter().for_each(|(k, v)| {
-                    if *v {
-                        add_app(k);
+                    if let Some(conf) = v.clone() {
+                        if let Some(install) = conf.install {
+                            if install {
+                                if let Some(fullname) = conf.fullname {
+                                    add_app(&fullname)
+                                } else {
+                                    add_app(&k);
+                                }
+                            }
+                        } else if let Some(fullname) = conf.fullname {
+                            add_app(&fullname)
+                        } else {
+                            add_app(&k);
+                        }
+                    } else {
+                        add_app(&k);
                     }
                 });
             }
