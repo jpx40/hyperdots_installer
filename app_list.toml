@@ -55,29 +55,14 @@ firefox = true
 kitty = true
 dolphin = true
 ark = true
-# vim = uncomment if desired
-visual-studio-code-bin = true
-# lapce = uncomment if desired
-# code = uncomment if desired
-# code-marketplace = uncomment if desired
-neovim = true
-chezmoi = true
 appimagelauncher = true
-apptainer = true
-
-[extra.intellij]
-jdk-openjdk = true
-intellij-idea-community = true
-
-[extra.development]
-neovide = true
-
-[extra.terminal]
-alacritty = true
-
-[extra.optional]
 
 
+[extra.editor]
+neovim = true
+visual-studio-code-bin = true
+code = true
+sublime-text4 = true
 # Shell
 [shell]
 # Choose one option for file lister

@@ -5,11 +5,7 @@ use crate::utils;
 use crate::Cli;
 use crate::Feature;
 use futures::future;
-
 use itertools::Position;
-use rayon::result;
-use reedline;
-use reedline::{DefaultPrompt, Reedline, Signal};
 use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, Editor};
 use serde::{Deserialize, Serialize};
@@ -165,9 +161,6 @@ impl Menu {
         let mut s = &text[0..text.len() - 2];
         //  s.remove(-2);
         println!("1. {}, {s} | {default_str}", group.default.unwrap().name);
-
-        // let mut line_editor = Reedline::create();
-        // let prompt = DefaultPrompt::default();
 
         'outer: loop {
             //let mut rl = self.editor.readline(">> "); // read

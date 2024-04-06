@@ -39,6 +39,8 @@ pub struct Cli {
     pub backup: bool,
     #[arg(long, default_value_t = String::from("~/backup/"))]
     pub backup_path: String,
+    #[arg(short, long)]
+    pub deps_file: Option<String>,
 }
 
 #[derive(Debug, Clone, ValueEnum)]
@@ -58,7 +60,11 @@ impl Feature {
         self.backup = backup;
     }
 }
-
+pub fn command(c: Cli) {
+    if let Some(list) = c.list {
+        if list.contains(".toml") {}
+    }
+}
 //struct Commands {}
 fn main() {
     println!("\n");
