@@ -1,12 +1,37 @@
 use config;
+use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::env;
 pub fn check_arguments_from_config() {}
+use std::sync::{Arc, RwLock};
+use std::sync::{Mutex, OnceLock};
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     pub config_file: String,
     pub config_dir: String,
+    pub app_file: String,
+    pub dep_file: String,
+}
+
+// struct App {
+//     name: String,
+//     path: String,
+//     group: String,
+// }
+// struct Config {
+//     apps: Vec<App>,
+// }
+
+lazy_static! {
+    pub static ref CONF: Mutex<Config> =
+        Mutex::new(Config::new("", "", "app_list.toml", "deps.toml"));
+}
+
+static GLOBAL_CONF: Mutex<Option<Config>> = Mutex::new(None);
+
+lazy_static! {
+    pub static ref CURRENT_CONFIG: RwLock<Arc<Config>> = RwLock::new(Default::default());
 }
 
 impl Config {
@@ -18,10 +43,12 @@ impl Config {
     //         pub fn get_config_dir() -> String {
     //             config::get_config_dir()
     //         }
-    pub fn new(file: &str, path: &str) -> Config {
+    pub fn new(file: &str, path: &str, app_file: &str, dep_file: &str) -> Config {
         Config {
             config_file: file.to_string(),
             config_dir: path.to_string(),
+            app_file: app_file.to_string(),
+            dep_file: dep_file.to_string(),
         }
     }
 }

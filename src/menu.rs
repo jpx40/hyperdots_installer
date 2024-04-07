@@ -4,18 +4,20 @@ use crate::installer::EditorList;
 use crate::utils;
 use crate::Cli;
 use crate::Feature;
-use futures::future;
+use itertools::Position;
 use rustyline::error::ReadlineError;
-use rustyline::{DefaultEditor, Editor, Result};
+use rustyline::{DefaultEditor, Editor};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::default;
 use std::env;
 use std::fs;
-use std::io;
+use std::io::Error;
+use std::panic;
 use std::path::{Path, PathBuf};
 use std::process;
 use std::string::String;
+use std::u32;
 use std::usize;
 
 #[derive(Debug)]
@@ -86,36 +88,45 @@ impl Menu {
         self.groups.remove(group);
     }
 
-    pub fn new_group(&mut self, name: String) {
+    pub fn new_group(&mut self, name: &str) {
         self.new_group_with_name(name)
     }
-    pub fn new_group_with_name(&mut self, name: String) {
-        self.groups.insert(name.clone(), Group::new_with_name(name));
+    pub fn new_group_with_name(&mut self, name: &str) {
+        self.groups
+            .insert(name.to_string().clone(), Group::new_with_name(name));
     }
     pub fn editor_config(&mut self) {}
-    pub fn entry(&mut self, group: Group) {
+    pub fn entry(&mut self, group: Group) -> rustyline::Result<()> {
         let mut group = group;
         let mut text: String = String::new();
-        let mut lines: Vec<Line> = Vec::new();
-        let mut count: i32 = 0;
-        let mut default: App = App::new("Neovim".to_string());
+        //  let mut lines: Vec<Line> = Vec::new();
+        let mut default: App = App::new("Neovim");
         let mut default_str: String = String::new();
-
+        let mut default_position: u32 = 1;
+        let mut default_position_str: String = String::new();
+        let mut position_str: HashMap<String, String> = HashMap::new();
         match group.default.clone() {
             Some(d) => {
                 default = d;
-                default_str = format!("Default: 1.");
+                default_str = "Default: 1.".to_string();
+                if default.position != 1 {
+                    default.to_owned().set_position(1);
+                    default.to_owned().set_position_str("1".to_string());
+                    default_position_str = "1".to_string();
+                }
                 if group.bin.contains_key(&default.name) {
                     group.remove_app(&default.name);
                 }
             }
             None => {
                 let mut count = 0;
-                for (k, v) in group.bin.iter() {
-                    count += 1;
+                for (_k, v) in group.bin.iter() {
                     default = v.clone();
-                    default_str = format!("Default: 1.");
 
+                    v.to_owned().set_position_str("1".to_string());
+                    default_position_str = "1".to_string();
+                    default_str = "Default: 1.".to_string();
+                    count += 1;
                     group.to_owned().bin.remove(&default.name);
                     if count == 1 {
                         break;
@@ -124,66 +135,146 @@ impl Menu {
             }
         }
 
-        for (k, _v) in group.bin.iter() {
+        let mut count: u32 = 1;
+
+        for (k, v) in group.bin.iter() {
             count += 1;
             // let line = format!("{count}. {k} ");
             //lines.push(Line::new(text, v.clone()));
-            text.push_str(&format!("{count}. {k} "));
+            v.to_owned().set_position(count);
+            match utils::into_string(count) {
+                Ok(s) => {
+                    // v.to_owned().set_position_str(s);
+                    position_str.insert(k.to_string(), s);
+                }
+                Err(e) => {
+                    panic!("{:?}", e)
+                }
+            }
+
+            text.push_str(&format!("{count}. {k}, "));
         }
         if let Some(name) = group.name {
-            println!("{name}");
+            println!("{}", name.to_uppercase());
         }
-        println!("{text}");
-        println!("{default_str}");
-        loop {
-            let readline = &self.editor.readline(">> "); // read
-            match readline {
+        let mut s = &text[0..text.len() - 2];
+        //  s.remove(-2);
+        println!("1. {}, {s} | {default_str}", group.default.unwrap().name);
+
+        'outer: loop {
+            //let mut rl = self.editor.readline(">> "); // read
+            //   let mut readline = ::new()?.readline(">> "); // read
+            let editor_prompt = ">>";
+            let line = self.editor.readline(editor_prompt);
+
+            match line {
                 Ok(line) => {
-                    let mut count: i32 = 2;
-                    if is_number(line) {
-                        let len = group.bin.len() + 1;
-                        if line
-                            .parse::<usize>()
-                            .unwrap_or_else(|err| panic!("{:?}", err))
-                            >= len
-                            || line
-                                .parse::<usize>()
-                                .unwrap_or_else(|err| panic!("{:?}", err))
-                                == len
-                        {
-                            if line == "1" {
-                                match default.fullname.clone() {
-                                    Some(n) => installer::add_app(&n),
-                                    None => installer::add_app(&default.name),
-                                }
+                    // let mut count: i32 = 2;
+                    if line.is_empty() {
+                        match default.fullname.clone() {
+                            Some(n) => {
+                                installer::add_app(&n);
+                            }
+                            None => {
+                                installer::add_app(&default.name);
+                            }
+                        }
+                        break 'outer;
+                    }
+                    let mut result: Vec<String> = Vec::new();
+                    if line.contains(",") {
+                        let line = line.trim();
+                        result = line.split(",").map(|s| s.trim().to_string()).collect();
+                    }
+                    if line.contains(" ") {
+                        result = line.split(" ").map(|s| s.trim().to_string()).collect();
+                    } else {
+                        result.push(line.clone());
+                    }
+                    let mut check: u16 = 0;
+                    result = result
+                        .iter()
+                        .filter(|s| !s.is_empty())
+                        .map(|s| s.to_string())
+                        .collect();
+                    for line in result.clone() {
+                        if !utils::is_number(&line) {
+                            let mut debug = String::new();
+                            if &line == "1" {
+                                debug = default.name.clone();
                             } else {
-                                for (_k, v) in group.bin.iter() {
-                                    if line == &count.to_string() {
+                                for (_k, v) in group.bin.clone().iter() {
+                                    // if v.position == 0 || v.position == 1 {
+                                    //     panic!("invalid position, of app {}", v.name)
+                                    // }
+                                    let test: String = format!("{}", v.position);
+                                    if &line == position_str.get(&v.name).unwrap() {
                                         match v.fullname.clone() {
-                                            Some(n) => installer::add_app(&n),
-                                            None => installer::add_app(&default.name),
+                                            Some(n) => {
+                                                println!("add app {}", n);
+                                                debug = n;
+                                            }
+                                            None => {}
                                         }
-                                        count += 1;
                                     }
                                 }
                             }
-                        } else {
-                            println!("Invalid input");
-                            continue;
+
+                            //println!("invalid Input {}", debug);
+                            //process::exit(0);
+                            //     break 'outer;
                         }
-                    } else if line.is_empty() {
-                        match default.fullname.clone() {
-                            Some(n) => installer::add_app(&n),
-                            None => installer::add_app(&default.name),
-                        }
-                    } else {
-                        println!("Invalid input");
-                        continue;
                     }
+
+                    for line in result {
+                        if utils::is_number(&line) {
+                            let check = line
+                                .parse::<usize>()
+                                .unwrap_or_else(|err| panic!("{:?}", err));
+
+                            if check >= group.bin.len() {
+                                println!("invalid Input")
+                            }
+                            if line == default.position.to_string() || line == "1" {
+                                match default.fullname.clone() {
+                                    Some(n) => {
+                                        installer::add_app(&n);
+                                    }
+                                    None => {
+                                        installer::add_app(&default.name);
+                                    }
+                                }
+                            } else {
+                                for (_k, v) in group.bin.clone().iter() {
+                                    // if v.position == 0 || v.position == 1 {
+                                    //     panic!("invalid position, of app {}", v.name)
+                                    // }
+                                    let test: String = format!("{}", v.position);
+                                    if &line == position_str.get(&v.name).unwrap() {
+                                        match v.fullname.clone() {
+                                            Some(n) => {
+                                                println!("add app {}", n);
+                                                installer::add_app(&n);
+                                            }
+                                            None => {
+                                                installer::add_app(&v.name);
+                                            }
+                                        }
+                                    }
+                                    count += 1;
+                                }
+                            }
+                        }
+                    }
+                    break 'outer;
                 }
                 //  for (k, v) in group.bin.iter() {},
                 Err(ReadlineError::Interrupted) => {
-                    println!("CTRL-C");
+                    println!("\nAborted!");
+                    process::exit(0);
+                }
+                Err(ReadlineError::Eof) => {
+                    println!("\nAborted!");
                     process::exit(0);
                 }
 
@@ -193,11 +284,8 @@ impl Menu {
                 }
             }
         }
+        Ok(())
     }
-}
-
-fn is_number(s: &str) -> bool {
-    s.chars().all(|c| c.is_numeric())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -215,6 +303,7 @@ impl Line {
         }
     }
 }
+pub fn run(c: Cli, g: Group) {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Group {
@@ -223,6 +312,7 @@ pub struct Group {
     pub description: Option<String>,
     pub default: Option<App>,
     pub category: Option<String>,
+    pub installer: Option<String>,
 }
 
 impl Group {
@@ -233,24 +323,27 @@ impl Group {
             description: None,
             default: None,
             category: None,
+            installer: None,
         }
     }
-    pub fn new_with_name(name: String) -> Self {
+    pub fn new_with_name(name: &str) -> Self {
         Self {
-            name: Some(name),
+            name: Some(name.to_string()),
             bin: HashMap::new(),
             description: None,
             default: None,
             category: None,
+            installer: None,
         }
     }
-    pub fn new_with_name_and_category(name: String, category: String) -> Self {
+    pub fn new_with_name_and_category(name: &str, category: &str) -> Self {
         Self {
-            name: Some(name),
+            name: Some(name.to_string()),
             bin: HashMap::new(),
             description: None,
             default: None,
-            category: Some(category),
+            category: Some(category.to_string()),
+            installer: None,
         }
     }
     pub fn new_with_category(category: String) -> Self {
@@ -260,9 +353,12 @@ impl Group {
             description: None,
             default: None,
             category: Some(category),
+            installer: None,
         }
     }
-
+    pub fn set_installer(&mut self, installer: String) {
+        self.installer = Some(installer);
+    }
     pub fn add(&mut self, app: App) {
         self.bin.insert(app.name.clone(), app);
     }
@@ -273,9 +369,10 @@ impl Group {
                 self.bin.remove(&app.name);
             }
         }
+        self.default.clone().unwrap().set_position(1);
     }
-    pub fn add_app(&mut self, name: String) {
-        self.bin.insert(name.clone(), App::new(name));
+    pub fn add_app(&mut self, name: &str) {
+        self.bin.insert(name.to_string().clone(), App::new(name));
     }
     pub fn remove_app(&mut self, name: &str) {
         self.bin.remove(name);
@@ -283,8 +380,8 @@ impl Group {
     pub fn add_description(&mut self, description: String) {
         self.description = Some(description);
     }
-    pub fn add_name(&mut self, group: String) {
-        self.name = Some(group);
+    pub fn add_name(&mut self, group: &str) {
+        self.name = Some(group.to_string());
     }
 }
 
@@ -294,173 +391,35 @@ pub struct App {
     pub version: Option<String>,
     pub description: Option<String>,
     pub fullname: Option<String>,
-    position: Option<i32>,
+    position: u32,
+    position_str: String,
 }
 
 impl App {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: &str) -> Self {
         Self {
-            name,
+            name: name.to_string(),
             version: None,
             description: None,
             fullname: None,
-            position: None,
+            position: 0,
+            position_str: String::new(),
         }
     }
     pub fn add_version(&mut self, version: String) {
         self.version = Some(version);
     }
+    pub fn set_position_str(&mut self, position_str: String) {
+        self.position_str = position_str;
+    }
     pub fn add_fullname(&mut self, fullname: String) {
         self.fullname = Some(fullname);
     }
-    pub fn set_position(&mut self, position: i32) {
-        self.position = Some(position);
+    pub fn set_position(&mut self, position: u32) {
+        self.position = position;
     }
 
     pub fn add_description(&mut self, description: String) {
         self.description = Some(description);
     }
-}
-
-pub fn menu(c: Cli, f: Feature) -> Result<()> {
-    env_logger::init();
-    let mut rl = DefaultEditor::new()?;
-
-    // let line = rl.readline(">> ")?; // read
-    // println!("Line: {line}"); // eval / print
-    //
-    //
-    //
-    println!("\n\nWelcome to the Installer");
-    println!("\n");
-    if f.backup {
-        loop {
-            println!("Backup | y/n | Default: y");
-
-            let readline = rl.readline(">> "); // read
-                                               // eval / printy
-
-            match readline {
-                Ok(line) => match line.to_lowercase().as_str() {
-                    "y" => {
-                        println!("Backup of Config");
-
-                        utils::backup(&c.backup_path, c.backup).unwrap();
-                        break;
-                    }
-                    "n" => {
-                        println!("No Backup");
-                        break;
-                    }
-
-                    "" => {
-                        println!("Backup of Config");
-                        let backup = false;
-                        utils::backup(&c.backup_path, backup).unwrap();
-                        break;
-                    }
-                    _ => {
-                        println!("Invalid Input")
-                    }
-                },
-                Err(ReadlineError::Interrupted) => {
-                    println!("CTRL-C");
-                    process::exit(0);
-                }
-
-                Err(err) => {
-                    println!("Error: {:?}", err);
-                    //           process::exit(0);
-                }
-            }
-        } // loop
-    }
-    loop {
-        println!("Choose Software");
-        println!("1. From Config, 2. All | Default: 1");
-        let readline = rl.readline(">> "); // read
-        match readline {
-            Ok(line) => match line.as_str() {
-                "1" => {
-                    println!("Installing from Config");
-                    installer::install_from_config();
-                    break;
-                }
-                "2" => {
-                    println!("Installing All");
-                    installer::install_all();
-                    break;
-                }
-
-                "" => {
-                    println!("Installing from Config");
-                    installer::install_from_config();
-                    break;
-                }
-                _ => {
-                    println!("Invalid Input")
-                }
-            },
-            Err(ReadlineError::Interrupted) => {
-                println!("CTRL-C");
-                process::exit(0);
-            }
-
-            Err(err) => {
-                println!("Error: {:?}", err);
-                //         process::exit(0);
-            }
-        }
-    }
-    loop {
-        println!("Choose Software");
-        println!("1. Code (VScode Open Source Edition), 2. Intellij, 3. VScode, 4. Neovim  5. All | Default: 1");
-        let readline = rl.readline(">> "); // read
-                                           // eval / printy
-
-        match readline {
-            Ok(line) => match line.as_str() {
-                "1" => {
-                    println!("Installing Code");
-                    installer::install_editor(EditorList::Code);
-                    break;
-                }
-                "2" => {
-                    println!("Installing Intellij");
-                    installer::install_editor(EditorList::Intellij);
-                    break;
-                }
-
-                "3" => {
-                    println!("Installing VScode");
-                    installer::install_editor(EditorList::VsCode);
-                    break;
-                }
-                "4" => {
-                    println!("Installing Neovim");
-                    installer::install_editor(EditorList::Neovim);
-                    break;
-                }
-                "5" => {
-                    println!("Installing All");
-                    installer::install_editor(EditorList::Any);
-                    break;
-                }
-
-                _ => {
-                    println!("Invalid Input")
-                }
-            },
-            Err(ReadlineError::Interrupted) => {
-                println!("CTRL-C");
-                process::exit(0);
-            }
-
-            Err(err) => {
-                println!("Error: {:?}", err);
-                //  process::exit(0);
-            }
-        }
-    } // loop
-    Ok(())
 }
