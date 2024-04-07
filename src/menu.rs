@@ -159,7 +159,10 @@ impl Menu {
         }
         let mut s = &text[0..text.len() - 2];
         //  s.remove(-2);
-        println!("1. {}, {s} | {default_str}", group.default.unwrap().name);
+        println!(
+            "1. {}, {s} | {default_str} , None: n/N",
+            group.default.unwrap().name
+        );
 
         'outer: loop {
             //let mut rl = self.editor.readline(">> "); // read
@@ -169,6 +172,9 @@ impl Menu {
 
             match line {
                 Ok(line) => {
+                    if &line == "n" || &line == "N" {
+                        break 'outer;
+                    }
                     // let mut count: i32 = 2;
                     if line.is_empty() {
                         match default.fullname.clone() {
