@@ -1,84 +1,84 @@
 # System
 [system]
-pipewire = true
-pipewire-alsa = true
-pipewire-audio = true
-pipewire-jack = true
-pipewire-pulse = true
-gst-plugin-pipewire = true
-wireplumber = true
-pavucontrol = true
-pamixer = true
-networkmanager = true
-network-manager-applet = true
-bluez = true
-bluez-utils = true
-blueman = true
-brightnessctl = true
-unzip = true
+pipewire = {}
+pipewire-alsa = {}
+pipewire-audio = {}
+pipewire-jack = {}
+pipewire-pulse = {}
+gst-plugin-pipewire = {}
+wireplumber = {}
+pavucontrol = {}
+pamixer = {}
+networkmanager = {}
+network-manager-applet = {}
+bluez = {}
+bluez-utils = {}
+blueman = {}
+brightnessctl = {}
+unzip = {}
 
 # Display Manager
 [displaymanager]
-sddm = true
-qt5-quickcontrols = true
-qt5-quickcontrols2 = true
-qt5-graphicaleffects = true
+sddm = {}
+qt5-quickcontrols = {}
+qt5-quickcontrols2 = {}
+qt5-graphicaleffects = {}
 
 # Window Manager
 [windowmanager]
-hyprland = true
-dunst = true
-rofi-lbonn-wayland-git = true
-waybar = true
-swww = true
-swaylock-effects-git = true
-wlogout = true
-grimblast-git = true
-hyprpicker = true
-slurp = true
-swappy = true
-cliphist = true
+hyprland = {}
+dunst = {}
+rofi-lbonn-wayland-git = {}
+waybar = {}
+swww = {}
+swaylock-effects-git = {}
+wlogout = {}
+grimblast-git = {}
+hyprpicker = {}
+slurp = {}
+swappy = {}
+cliphist = {}
 
 
 # Theming
 [theming]
-nwg-look = true
-qt5ct = true
-qt6ct = true
-kvantum = true
-qt5-wayland = true
-qt6-wayland = true
+nwg-look = {}
+qt5ct = {}
+qt6ct = {}
+kvantum = {}
+qt5-wayland = {}
+qt6-wayland = {}
 
 # Applications
 [extra.applications]
-firefox = true
-kitty = true
-dolphin = true
-ark = true
-appimagelauncher = true
+firefox = {}
+kitty = {}
+dolphin = {}
+ark = {}
+appimagelauncher = {}
 
 
 [extra.editor]
-neovim = true
-visual-studio-code-bin = true
-code = true
-sublime-text4 = true
+neovim = {}
+visual-studio-code-bin = {}
+code = {}
+sublime-text4 = {}
 # Shell
 [shell]
 # Choose one option for file lister
-eza = true # or
-# lsd = true  # uncomment if desired
+eza = {} # or
+# lsd = {}  # uncomment if desired
 
 # Choose one option for shell (and optionally theme)
-zsh = true
-oh-my-zsh-git = true           # plugin manager (required for theme)
-zsh-theme-powerlevel10k = true # theme (requires oh-my-zsh-git)
+zsh = {}
+oh-my-zsh-git = {}           # plugin manager (required for theme)
+zsh-theme-powerlevel10k = {} # theme (requires oh-my-zsh-git)
 
-# starship = true  # uncomment for fish and its theme
+# starship = {}  # uncomment for fish and its theme
 
-neofetch = true
-pokemon-colorscripts-git = true # uncomment if desired
+neofetch = {}
+pokemon-colorscripts-git = {} # uncomment if desired
 
 # Hyprdots
 [hyprdots]
-hyprdots-ctl-git = true
+hyprdots-ctl-git = {}

@@ -4,7 +4,6 @@ use crate::installer::EditorList;
 use crate::utils;
 use crate::Cli;
 use crate::Feature;
-use itertools::Position;
 use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, Editor};
 use serde::{Deserialize, Serialize};
@@ -99,6 +98,7 @@ impl Menu {
     pub fn entry(&mut self, group: Group) -> rustyline::Result<()> {
         let mut group = group;
         let mut text: String = String::new();
+        let mut apps = group.clone().bin;
         //  let mut lines: Vec<Line> = Vec::new();
         let mut default: App = App::new("Neovim");
         let mut default_str: String = String::new();
@@ -120,14 +120,14 @@ impl Menu {
             }
             None => {
                 let mut count = 0;
-                for (_k, v) in group.bin.iter() {
+                for (_k, v) in group.bin.iter().clone() {
                     default = v.clone();
 
                     v.to_owned().set_position_str("1".to_string());
                     default_position_str = "1".to_string();
                     default_str = "Default: 1.".to_string();
                     count += 1;
-                    group.to_owned().bin.remove(&default.name);
+                    apps.remove(&default.name);
                     if count == 1 {
                         break;
                     }
@@ -137,7 +137,7 @@ impl Menu {
 
         let mut count: u32 = 1;
 
-        for (k, v) in group.bin.iter() {
+        for (k, v) in apps.iter() {
             count += 1;
             // let line = format!("{count}. {k} ");
             //lines.push(Line::new(text, v.clone()));
@@ -160,8 +160,8 @@ impl Menu {
         let mut s = &text[0..text.len() - 2];
         //  s.remove(-2);
         println!(
-            "1. {}, {s} | {default_str} , None: n/N",
-            group.default.unwrap().name
+            "1. {}, {s} | {default_str} , All: a/A , None: n/N",
+            default.clone().name
         );
 
         'outer: loop {
@@ -172,9 +172,21 @@ impl Menu {
 
             match line {
                 Ok(line) => {
+                    let mut all_set: bool = false;
+                    let mut result: Vec<String> = Vec::new();
                     if &line == "n" || &line == "N" {
                         break 'outer;
                     }
+                    if &line == "a" || &line == "A" {
+                        all_set = true;
+                        result.push("1".to_string());
+                        let mut count: u32 = 1;
+                        for _i in apps.iter() {
+                            count += 1;
+                            result.push(count.to_string());
+                        }
+                    }
+
                     // let mut count: i32 = 2;
                     if line.is_empty() {
                         match default.fullname.clone() {
@@ -187,15 +199,15 @@ impl Menu {
                         }
                         break 'outer;
                     }
-                    let mut result: Vec<String> = Vec::new();
-                    if line.contains(",") {
-                        let line = line.trim();
-                        result = line.split(",").map(|s| s.trim().to_string()).collect();
-                    }
-                    if line.contains(" ") {
-                        result = line.split(" ").map(|s| s.trim().to_string()).collect();
-                    } else {
-                        result.push(line.clone());
+                    if !all_set {
+                        if line.contains(",") {
+                            let line = line.trim();
+                            result = line.split(",").map(|s| s.trim().to_string()).collect();
+                        } else if line.contains(" ") {
+                            result = line.split(" ").map(|s| s.trim().to_string()).collect();
+                        } else {
+                            result.push(line.clone());
+                        }
                     }
                     let mut check: u16 = 0;
                     result = result
@@ -203,34 +215,36 @@ impl Menu {
                         .filter(|s| !s.is_empty())
                         .map(|s| s.to_string())
                         .collect();
-                    for line in result.clone() {
-                        if !utils::is_number(&line) {
-                            let mut debug = String::new();
-                            if &line == "1" {
-                                debug = default.name.clone();
-                            } else {
-                                for (_k, v) in group.bin.clone().iter() {
-                                    // if v.position == 0 || v.position == 1 {
-                                    //     panic!("invalid position, of app {}", v.name)
-                                    // }
-                                    let test: String = format!("{}", v.position);
-                                    if &line == position_str.get(&v.name).unwrap() {
-                                        match v.fullname.clone() {
-                                            Some(n) => {
-                                                println!("add app {}", n);
-                                                debug = n;
-                                            }
-                                            None => {}
-                                        }
-                                    }
-                                }
-                            }
-
-                            //println!("invalid Input {}", debug);
-                            //process::exit(0);
-                            //     break 'outer;
-                        }
-                    }
+                    // for line in result.clone() {
+                    //     if !utils::is_number(&line) {
+                    //         let mut debug = String::new();
+                    //         if &line == "1" {
+                    //             debug = default.name.clone();
+                    //         } else {
+                    //             for (_k, v) in apps.clone().iter() {
+                    //                 // if v.position == 0 || v.position == 1 {
+                    //                 //     panic!("invalid position, of app {}", v.name)
+                    //                 // }
+                    //                 let test: String = format!("{}", v.position);
+                    //                 if let Some(pat) = position_str.get(&v.name) {
+                    //                     if &line == pat {
+                    //                         match v.fullname.clone() {
+                    //                             Some(n) => {
+                    //                                 println!("add app {}", n);
+                    //                                 debug = n;
+                    //                             }
+                    //                             None => {}
+                    //                         }
+                    //                     }
+                    //                 }
+                    //             }
+                    //         }
+                    //
+                    //         //println!("invalid Input {}", debug);
+                    //         //process::exit(0);
+                    //         //     break 'outer;
+                    //     }
+                    // }
 
                     for line in result {
                         if utils::is_number(&line) {
@@ -238,7 +252,7 @@ impl Menu {
                                 .parse::<usize>()
                                 .unwrap_or_else(|err| panic!("{:?}", err));
 
-                            if check >= group.bin.len() {
+                            if check >= apps.len() {
                                 println!("invalid Input")
                             }
                             if line == default.position.to_string() || line == "1" {
@@ -251,7 +265,7 @@ impl Menu {
                                     }
                                 }
                             } else {
-                                for (_k, v) in group.bin.clone().iter() {
+                                for (_k, v) in apps.clone().iter() {
                                     // if v.position == 0 || v.position == 1 {
                                     //     panic!("invalid position, of app {}", v.name)
                                     // }

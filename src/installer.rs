@@ -37,11 +37,33 @@ pub struct AppList {
     pub theming: Option<HashMap<String, Option<AppConf>>>,
     pub hyperdots: Option<HashMap<String, Option<AppConf>>>,
 }
+impl AppList {
+    pub fn new() -> AppList {
+        AppList {
+            extra: None,
+            system: None,
+            theming: None,
+            windowmanager: None,
+            dependicies: None,
+            hyperdots: None,
+            shell: None,
+            displaymanager: None,
+        }
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Dependency {
     pub dependency: Option<HashMap<String, Option<AppConf>>>,
     pub extra: Option<HashMap<String, HashMap<String, Option<AppConf>>>>,
+}
+impl Dependency {
+    pub fn new() -> Dependency {
+        Dependency {
+            dependency: None,
+            extra: None,
+        }
+    }
 }
 
 // #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
@@ -51,13 +73,15 @@ pub struct Dependency {
 // }
 
 lazy_static! {
-    pub static ref APP_LIST: AppList = utils::read_app_list(&conf::CONF.lock().unwrap().dep_file)
-        .unwrap_or_else(|err| panic!("{}", err));
+    pub static ref APP_LIST: Mutex<AppList> = Mutex::new(AppList::new());
 }
 lazy_static! {
-    pub static ref DEPENDENCIES: Dependency =
-        utils::read_dep_list(&conf::CONF.lock().unwrap().app_file)
-            .unwrap_or_else(|err| panic!("{}", err));
+    pub static ref DEPENDENCIES: Mutex<Dependency> = Mutex::new(Dependency::new());
+}
+
+pub fn app_list() -> &'static Mutex<AppList> {
+    static ARRAY: OnceLock<Mutex<AppList>> = OnceLock::new();
+    ARRAY.get_or_init(|| Mutex::new(AppList::new()))
 }
 
 // https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton
@@ -84,8 +108,8 @@ pub fn params_file() -> &'static Mutex<String> {
 pub fn install_all() {}
 
 pub fn install_from_config() {
-    let app_list = APP_LIST.clone();
-    let dep_list = DEPENDENCIES.clone();
+    let app_list = APP_LIST.lock().unwrap().clone();
+    let dep_list = DEPENDENCIES.lock().unwrap().clone();
     check_app_conf(app_list.system);
     check_app_conf(app_list.displaymanager);
     check_app_conf(app_list.theming);
@@ -93,7 +117,7 @@ pub fn install_from_config() {
     check_app_conf(app_list.dependicies);
     check_app_conf(dep_list.dependency.clone());
     add_extra_deps(dep_list);
-    install_applications();
+    //  install_applications();
 }
 
 fn check_app_conf(app: Option<HashMap<String, Option<AppConf>>>) {
@@ -172,11 +196,11 @@ pub enum EditorList {
 // }
 
 fn install_applications() {
-    let app_list = APP_LIST.clone();
+    let app_list = APP_LIST.lock().unwrap().clone();
     add_extra(app_list, "application")
 }
 pub fn install_editor(editor: EditorList) {
-    let app_list = APP_LIST.clone();
+    let app_list = APP_LIST.lock().unwrap().clone();
 }
 //     match editor {
 //         EditorList::Intellij => add_app("intellij-idea-community-edition"),

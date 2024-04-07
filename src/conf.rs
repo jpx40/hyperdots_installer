@@ -8,10 +8,10 @@ use std::sync::{Mutex, OnceLock};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
-    pub config_file: String,
-    pub config_dir: String,
-    pub app_file: String,
-    pub dep_file: String,
+    pub config_file: Option<String>,
+    pub config_dir: Option<String>,
+    pub app_file: Option<String>,
+    pub dep_file: Option<String>,
 }
 
 // struct App {
@@ -23,10 +23,9 @@ pub struct Config {
 //     apps: Vec<App>,
 // }
 
-lazy_static! {
-    pub static ref CONF: Mutex<Config> =
-        Mutex::new(Config::new("", "", "app_list.toml", "deps.toml"));
-}
+// lazy_static! {
+//     pub static ref CONF: Mutex<Config> = Mutex::new(Config::new("", "", "", ""));
+// }
 
 static GLOBAL_CONF: Mutex<Option<Config>> = Mutex::new(None);
 
@@ -43,12 +42,12 @@ impl Config {
     //         pub fn get_config_dir() -> String {
     //             config::get_config_dir()
     //         }
-    pub fn new(file: &str, path: &str, app_file: &str, dep_file: &str) -> Config {
-        Config {
-            config_file: file.to_string(),
-            config_dir: path.to_string(),
-            app_file: app_file.to_string(),
-            dep_file: dep_file.to_string(),
-        }
-    }
+    // pub fn new(file: &str, path: &str, app_file: &str, dep_file: &str) -> Config {
+    //     Config {
+    //         config_file: file.to_string(),
+    //         config_dir: path.to_string(),
+    //         app_file: app_file.to_string(),
+    //         dep_file: dep_file.to_string(),
+    //     }
+    // }
 }

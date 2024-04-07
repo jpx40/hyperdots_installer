@@ -1,42 +1,42 @@
 # dependencies
 [dependencies]
-polkit-kde-agent = true
-xdg-desktop-portal-hyprland = true
-pacman-contrib = true
-python-pyamdgpuinfo = true
-parallel = true
-jq = true
-imagemagick = true
-qt5-imageformats = true
-ffmpegthumbs = true
-kde-cli-tools = true
-kservice5 = true
+polkit-kde-agent = {}
+xdg-desktop-portal-hyprland = {}
+pacman-contrib = {}
+python-pyamdgpuinfo = {}
+parallel = {}
+jq = {}
+imagemagick = {}
+qt5-imageformats = {}
+ffmpegthumbs = {}
+kde-cli-tools = {}
+kservice5 = {}
 
 
 [extra.neovim]
 # Dependencies for Dev and Neovim
 # Choose one C Compiler
-gcc = true
-# clang =  true
-npm = true
-nodejs = true
-python-pipx = true
-rust = true
-cargo = true
-cmake = true
-make = true
-ninja = true
-devtools = true
-python-pynvim = true
-xclip = true
-xsel = true
-wl-clipboard = true
-ttf-nerd-fonts-symbols = true
-ttf-nerd-fonts-symbols-common = true
-ripgrep = true
-fzf = true
-fd = true
+gcc = {}
+# clang =  {}
+npm = {}
+nodejs = {}
+python-pipx = {}
+rust = {}
+cargo = {}
+cmake = {}
+make = {}
+ninja = {}
+devtools = {}
+python-pynvim = {}
+xclip = {}
+xsel = {}
+wl-clipboard = {}
+ttf-nerd-fonts-symbols = {}
+ttf-nerd-fonts-symbols-common = {}
+ripgrep = {}
+fzf = {}
+fd = {}
 
 [extra.code]
-code = true
-code-marketplace = true
+code = {}
+code-marketplace = {}
