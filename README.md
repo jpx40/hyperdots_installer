@@ -28,4 +28,3 @@ you have to pass arguments to the binary
 
 
 
-All development is on the dev branch
