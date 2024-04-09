@@ -1,4 +1,3 @@
-use crate::utils::{self, read_app_list};
 use crate::{conf, menu};
 use home::home_dir;
 use lazy_static::lazy_static;
@@ -6,13 +5,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::create_dir_all;
 use std::io::Write;
-use std::sync::mpsc::channel;
+
 use std::sync::{Arc, Mutex, OnceLock};
-use std::{
-    env,
-    fs::File,
-    path::{Path, PathBuf},
-};
+use std::{env, fs::File, path::PathBuf};
 
 type Extra = HashMap<String, HashMap<String, Option<AppConf>>>;
 
@@ -66,12 +61,6 @@ impl Dependency {
     }
 }
 
-// #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-// enum Extra {
-//     HashMap,
-//     String,
-// }
-
 lazy_static! {
     pub static ref APP_LIST: Mutex<AppList> = Mutex::new(AppList::new());
 }
@@ -115,6 +104,8 @@ pub fn install_from_config() {
     check_app_conf(app_list.theming);
     check_app_conf(app_list.hyperdots);
     check_app_conf(app_list.dependicies);
+    check_app_conf(app_list.windowmanager);
+    check_app_conf(app_list.shell);
     check_app_conf(dep_list.dependency.clone());
     add_extra_deps(dep_list);
     //  install_applications();
@@ -160,11 +151,17 @@ pub fn install(out: String) -> Result<(), String> {
     write_to_file();
     let path: PathBuf = env::current_dir().unwrap();
 
-    if !Path::new("~/.cache/hyprdots").exists() {
-        create_dir_all(Path::new("~/.cache/hyprdots")).unwrap_or_else(|err| panic!("{}", err));
-    }
-    let cache_path = Path::new("~/.cache/hyprdots/");
-    let mut file: File = File::create(cache_path.join(out.clone())).unwrap();
+    // if !Path::new("~/.cache/hyprdots").exists() {
+    //     create_dir_all(Path::new("~/.cache/hyprdots")).unwrap_or_else(|err| panic!("{}", err));
+    // }
+    // let cache_path = Path::new("~/.cache/hyprdots/");
+    let out_path = camino::Utf8Path::new(&out)
+        .parent()
+        .unwrap()
+        .canonicalize_utf8()
+        .unwrap_or_else(|err| panic!("{}", err));
+
+    let mut file: File = File::create(out_path.join(out.clone())).unwrap();
     let mut app_file: File = File::create(path.join(out)).unwrap();
     file.write_all(params_file().lock().unwrap().as_bytes())
         .unwrap_or_else(|err| panic!("{}", err));
@@ -174,15 +171,6 @@ pub fn install(out: String) -> Result<(), String> {
         app_file.write_all(buf.as_bytes()).unwrap();
     }
     Ok(())
-}
-
-pub enum EditorList {
-    VsCode,
-    Code,
-    Neovim,
-    Intellij,
-    //    Unknown,
-    Any,
 }
 
 // pub fn is_installed(app: &str) -> bool {
@@ -199,21 +187,6 @@ fn install_applications() {
     let app_list = APP_LIST.lock().unwrap().clone();
     add_extra(app_list, "application")
 }
-pub fn install_editor(editor: EditorList) {
-    let app_list = APP_LIST.lock().unwrap().clone();
-}
-//     match editor {
-//         EditorList::Intellij => add_app("intellij-idea-community-edition"),
-//         EditorList::VsCode => add_app("visual-studio-code-bin"),
-//         EditorList::Code => add_app("code"),
-//         EditorList::Neovim => {
-//             add_extra_deps(app_list, "neovim", "editor");
-//         }
-//         EditorList::Any => {
-//             add_extra_deps(app_list, "any", "editor");
-//         }
-//     }
-// }
 
 fn extra_menu(app_list: AppList, g: String) -> menu::Group {
     let mut group = menu::Group::new_with_name(&g);

@@ -1,6 +1,5 @@
 use crate::conf;
 use crate::installer;
-use crate::installer::EditorList;
 use crate::utils;
 use crate::Cli;
 use crate::Feature;
