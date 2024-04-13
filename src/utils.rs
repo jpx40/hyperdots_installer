@@ -1,16 +1,15 @@
 use crate::installer::{AppList, Dependency};
 use chrono::Local;
 use copy_dir::copy_dir;
-use std::process::{Command, Output};
-
-use std::collections::HashMap;
 use std::fs::File;
 use std::io;
 use std::io::Read;
 use std::path::Path;
+use std::process::{Command, Output};
 
-pub fn read_app_list(file: &str) -> Result<AppList, toml::de::Error> {
-    let file = Path::new(file);
+pub fn read_app_list(file_ref: &str) -> Result<AppList, toml::de::Error> {
+    let file_str = complete_path(file_ref.to_string());
+    let file = Path::new(&file_str);
     let mut pkg_str = String::new();
     File::open(file)
         .unwrap()
@@ -19,8 +18,9 @@ pub fn read_app_list(file: &str) -> Result<AppList, toml::de::Error> {
     let app_list: AppList = toml::from_str(&pkg_str)?;
     Ok(app_list)
 }
-pub fn read_dep_list(file: &str) -> Result<Dependency, toml::de::Error> {
-    let file = Path::new(file);
+pub fn read_dep_list(file_ref: &str) -> Result<Dependency, toml::de::Error> {
+    let file_str = complete_path(file_ref.to_string());
+    let file = Path::new(&file_str);
     let mut pkg_str = String::new();
     File::open(file)
         .unwrap()
@@ -28,6 +28,14 @@ pub fn read_dep_list(file: &str) -> Result<Dependency, toml::de::Error> {
         .unwrap();
     let app_list: Dependency = toml::from_str(&pkg_str)?;
     Ok(app_list)
+}
+
+pub fn complete_path(p: String) -> String {
+    if !p.contains('/') {
+        "./".to_string() + &p
+    } else {
+        p
+    }
 }
 
 //

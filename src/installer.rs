@@ -1,12 +1,9 @@
 use crate::aur::PkgDB;
 use crate::{conf, menu, utils};
 use core::panic;
-use home::home_dir;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use std::clone;
 use std::collections::HashMap;
-use std::fs::create_dir_all;
 use std::io::Write;
 use std::sync::{Arc, Mutex, OnceLock};
 use std::{env, fs::File, path::PathBuf};
@@ -156,18 +153,20 @@ pub fn install(out: String) -> Result<(), String> {
     //     create_dir_all(Path::new("~/.cache/hyprdots")).unwrap_or_else(|err| panic!("{}", err));
     // }
     // let cache_path = Path::new("~/.cache/hyprdots/");
+    let out: String = utils::complete_path(out);
     let out_path = camino::Utf8Path::new(&out)
         .parent()
         .unwrap()
         .canonicalize_utf8()
         .unwrap_or_else(|err| panic!("{}", err));
-
+    //
     let mut file: File = File::create(out_path.join(out.clone())).unwrap();
     let mut app_file: File = File::create(path.join(out)).unwrap();
     file.write_all(params_file().lock().unwrap().as_bytes())
         .unwrap_or_else(|err| panic!("{}", err));
     let apps: Vec<String> = app_array().lock().unwrap().clone();
     let mut apps_tmp: Vec<String> = Vec::new();
+    //has to be changed later
     if utils::check_distro("arch") {
         let mut count: u32 = 0;
         let mut pkg_db: PkgDB = PkgDB::init().unwrap_or_else(|err| panic!("{}", err));
@@ -177,6 +176,8 @@ pub fn install(out: String) -> Result<(), String> {
             }
             count += 1;
         });
+    } else {
+        apps_tmp = apps;
     }
     for app in apps_tmp {
         println!("Installing: {:?}", app);

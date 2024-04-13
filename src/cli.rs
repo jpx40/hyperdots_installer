@@ -1,5 +1,3 @@
-use crate::installer::*;
-use crate::utils::read_app_list;
 use crate::{Cli, Group};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 #[derive(Debug, Clone, ValueEnum)]
