@@ -1,6 +1,7 @@
 use crate::installer::{AppList, Dependency};
 use chrono::Local;
 use copy_dir::copy_dir;
+use std::process::Command;
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -123,4 +124,41 @@ pub fn into_string(n: u32) -> Result<String, String> {
         _ => return Err("invalid number".to_string()),
     }
     Ok(s)
+}
+
+pub fn check_distro(distro: &str) -> bool {
+    let mut sh = Command::new("sh");
+    let out = Command::new("cat")
+        .arg("/etc/os-release")
+        .output()
+        .expect("Failed to execute command");
+
+    let s = String::from_utf8_lossy(&out.stdout).to_string();
+    let split: Vec<&str> = s.split("\n").collect();
+    let mut os: String = String::new();
+    let s: Vec<String> = split
+        .iter()
+        .map(|x| x.to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    s.iter().for_each(|s| {
+        if s.contains("ID_LIKE") {
+            let split: Vec<&str> = s.split("=").collect();
+            os = split[1].to_string();
+            os = os.replace(r#"""#, "");
+            os = os.replace("\\", "");
+        }
+    });
+    let mut out: Vec<String> = Vec::new();
+    if os.contains(" ") {
+        let split: Vec<&str> = os.split(" ").collect();
+        for i in split {
+            out.push(i.to_string().trim().to_string())
+        }
+    } else {
+        out.push(os)
+    }
+    out = out.iter().map(|s| s.to_lowercase()).collect();
+    out.contains(&distro.to_string())
 }

@@ -32,6 +32,7 @@ mod utils;
 use menu::*;
 
 use crate::installer::APP_LIST;
+mod aur;
 mod cli;
 mod conf;
 mod installer;

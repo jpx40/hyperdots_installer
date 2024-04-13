@@ -1,11 +1,13 @@
-use crate::{conf, menu};
+use crate::aur::PkgDB;
+use crate::{conf, menu, utils};
+use core::panic;
 use home::home_dir;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
+use std::clone;
 use std::collections::HashMap;
 use std::fs::create_dir_all;
 use std::io::Write;
-
 use std::sync::{Arc, Mutex, OnceLock};
 use std::{env, fs::File, path::PathBuf};
 
@@ -148,7 +150,6 @@ fn write_to_file() {
     }
 }
 pub fn install(out: String) -> Result<(), String> {
-    write_to_file();
     let path: PathBuf = env::current_dir().unwrap();
 
     // if !Path::new("~/.cache/hyprdots").exists() {
@@ -165,7 +166,19 @@ pub fn install(out: String) -> Result<(), String> {
     let mut app_file: File = File::create(path.join(out)).unwrap();
     file.write_all(params_file().lock().unwrap().as_bytes())
         .unwrap_or_else(|err| panic!("{}", err));
-    for app in app_array().lock().unwrap().iter() {
+    let mut apps = app_array().lock().unwrap().clone();
+    let mut apps_tmp: Vec<String> = Vec::new();
+    if utils::check_distro("arch") {
+        let mut count: u32 = 0;
+        apps.iter().for_each(|a| {
+            let mut pkg_db = PkgDB::init().unwrap_or_else(|err| panic!("{}", err));
+            if !pkg_db.is_installed(a.clone()) {
+                apps_tmp.push(a.clone());
+            }
+            count += 1;
+        });
+    }
+    for app in apps_tmp {
         println!("Installing: {:?}", app);
         let buf = app.clone() + "\n";
         app_file.write_all(buf.as_bytes()).unwrap();
