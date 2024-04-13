@@ -170,8 +170,8 @@ pub fn install(out: String) -> Result<(), String> {
     let mut apps_tmp: Vec<String> = Vec::new();
     if utils::check_distro("arch") {
         let mut count: u32 = 0;
+        let mut pkg_db = PkgDB::init().unwrap_or_else(|err| panic!("{}", err));
         apps.iter().for_each(|a| {
-            let mut pkg_db = PkgDB::init().unwrap_or_else(|err| panic!("{}", err));
             if !pkg_db.is_installed(a.clone()) {
                 apps_tmp.push(a.clone());
             }
