@@ -1,7 +1,7 @@
 use crate::installer::{AppList, Dependency};
 use chrono::Local;
 use copy_dir::copy_dir;
-use std::process::Command;
+use std::process::{Command, Output};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -88,52 +88,15 @@ pub fn backup(backup_path: &str, backup: bool) -> Result<(), io::Error> {
 pub fn is_number(s: &str) -> bool {
     s.chars().all(|c| c.is_numeric())
 }
-pub fn into_string(n: u32) -> Result<String, String> {
-    let mut s = String::new();
-    match n {
-        1 => s.push_str("1"),
-        2 => s.push_str("2"),
-        3 => s.push_str("3"),
-        4 => s.push_str("4"),
-        5 => s.push_str("5"),
-        6 => s.push_str("6"),
-        7 => s.push_str("7"),
-        8 => s.push_str("8"),
-        9 => s.push_str("9"),
-        10 => s.push_str("10"),
-        11 => s.push_str("11"),
-        12 => s.push_str("12"),
-        13 => s.push_str("13"),
-        14 => s.push_str("14"),
-        15 => s.push_str("15"),
-        16 => s.push_str("16"),
-        17 => s.push_str("17"),
-        18 => s.push_str("18"),
-        19 => s.push_str("19"),
-        20 => s.push_str("20"),
-        21 => s.push_str("21"),
-        22 => s.push_str("22"),
-        23 => s.push_str("23"),
-        24 => s.push_str("24"),
-        25 => s.push_str("25"),
-        26 => s.push_str("26"),
-        27 => s.push_str("27"),
-        28 => s.push_str("28"),
-        29 => s.push_str("29"),
-        30 => s.push_str("30"),
-        _ => return Err("invalid number".to_string()),
-    }
-    Ok(s)
-}
 
 pub fn check_distro(distro: &str) -> bool {
-    let mut sh = Command::new("sh");
-    let out = Command::new("cat")
+    let mut sh: Command = Command::new("sh");
+    let out: Output = Command::new("cat")
         .arg("/etc/os-release")
         .output()
         .expect("Failed to execute command");
 
-    let s = String::from_utf8_lossy(&out.stdout).to_string();
+    let s: String = String::from_utf8_lossy(&out.stdout).to_string();
     let split: Vec<&str> = s.split("\n").collect();
     let mut os: String = String::new();
     let s: Vec<String> = split

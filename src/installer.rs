@@ -87,7 +87,7 @@ pub fn add_app(app: &str) {
     }
 }
 pub fn add_line(line: &str) {
-    let line = line.to_string() + "\n";
+    let line: String = line.to_string() + "\n";
     params_file().lock().unwrap().push_str(&line);
 }
 
@@ -99,8 +99,8 @@ pub fn params_file() -> &'static Mutex<String> {
 pub fn install_all() {}
 
 pub fn install_from_config() {
-    let app_list = APP_LIST.lock().unwrap().clone();
-    let dep_list = DEPENDENCIES.lock().unwrap().clone();
+    let app_list: AppList = APP_LIST.lock().unwrap().clone();
+    let dep_list: Dependency = DEPENDENCIES.lock().unwrap().clone();
     check_app_conf(app_list.system);
     check_app_conf(app_list.displaymanager);
     check_app_conf(app_list.theming);
@@ -166,11 +166,11 @@ pub fn install(out: String) -> Result<(), String> {
     let mut app_file: File = File::create(path.join(out)).unwrap();
     file.write_all(params_file().lock().unwrap().as_bytes())
         .unwrap_or_else(|err| panic!("{}", err));
-    let mut apps = app_array().lock().unwrap().clone();
+    let apps: Vec<String> = app_array().lock().unwrap().clone();
     let mut apps_tmp: Vec<String> = Vec::new();
     if utils::check_distro("arch") {
         let mut count: u32 = 0;
-        let mut pkg_db = PkgDB::init().unwrap_or_else(|err| panic!("{}", err));
+        let mut pkg_db: PkgDB = PkgDB::init().unwrap_or_else(|err| panic!("{}", err));
         apps.iter().for_each(|a| {
             if !pkg_db.is_installed(a.clone()) {
                 apps_tmp.push(a.clone());
@@ -180,7 +180,7 @@ pub fn install(out: String) -> Result<(), String> {
     }
     for app in apps_tmp {
         println!("Installing: {:?}", app);
-        let buf = app.clone() + "\n";
+        let buf: String = app.clone() + "\n";
         app_file.write_all(buf.as_bytes()).unwrap();
     }
     Ok(())
@@ -281,16 +281,16 @@ fn add_extra_deps(dep_list: Dependency) {
                                 if let Some(fullname) = conf.fullname {
                                     add_app(&fullname)
                                 } else {
-                                    add_app(&k);
+                                    add_app(k);
                                 }
                             }
                         } else if let Some(fullname) = conf.fullname {
                             add_app(&fullname)
                         } else {
-                            add_app(&k);
+                            add_app(k);
                         }
                     } else {
-                        add_app(&k);
+                        add_app(k);
                     }
                 });
             }

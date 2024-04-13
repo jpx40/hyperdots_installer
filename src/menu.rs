@@ -141,15 +141,9 @@ impl Menu {
             // let line = format!("{count}. {k} ");
             //lines.push(Line::new(text, v.clone()));
             v.to_owned().set_position(count);
-            match utils::into_string(count) {
-                Ok(s) => {
-                    // v.to_owned().set_position_str(s);
-                    position_str.insert(k.to_string(), s);
-                }
-                Err(e) => {
-                    panic!("{:?}", e)
-                }
-            }
+
+            // v.to_owned().set_position_str(s);
+            position_str.insert(k.to_string(), count.to_string());
 
             text.push_str(&format!("{count}. {k}, "));
         }
