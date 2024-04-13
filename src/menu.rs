@@ -238,9 +238,6 @@ impl Menu {
                                 .parse::<usize>()
                                 .unwrap_or_else(|err| panic!("{:?}", err));
 
-                            if check >= apps.len() {
-                                println!("invalid Input")
-                            }
                             if line == default.position.to_string() || line == "1" {
                                 match default.fullname.clone() {
                                     Some(n) => {
