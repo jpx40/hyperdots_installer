@@ -2,7 +2,6 @@ use config;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::env;
-pub fn check_arguments_from_config() {}
 use std::sync::{Arc, RwLock};
 use std::sync::{Mutex, OnceLock};
 

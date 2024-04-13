@@ -186,11 +186,11 @@ impl Menu {
                         break 'outer;
                     }
                     if !all_set {
-                        if line.contains(",") {
+                        if line.contains(',') {
                             let line = line.trim();
-                            result = line.split(",").map(|s| s.trim().to_string()).collect();
-                        } else if line.contains(" ") {
-                            result = line.split(" ").map(|s| s.trim().to_string()).collect();
+                            result = line.split(',').map(|s| s.trim().to_string()).collect();
+                        } else if line.contains(' ') {
+                            result = line.split(' ').map(|s| s.trim().to_string()).collect();
                         } else {
                             result.push(line.clone());
                         }
