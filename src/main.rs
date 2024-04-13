@@ -1,41 +1,13 @@
-use chrono::prelude::*;
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use conf::Config;
-use copy_dir::copy_dir;
-
-use installer::AppConf;
-
-use log::log;
-use menu::App;
-use serde::de::value;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs;
-use std::fs::File;
-use std::io;
-use std::io::prelude::*;
-use std::io::Write;
-use std::path::Path;
-use std::path::PathBuf;
-use std::process;
 use std::string::String;
-use std::sync::{Mutex, OnceLock};
-use std::time;
-use std::time::Duration;
 use std::vec::Vec;
-use std::{default, env};
-use toml::{toml, Table};
-use walkdir::WalkDir;
 mod menu;
 use menu::Group;
-mod utils;
-use menu::*;
-
-use crate::installer::APP_LIST;
 mod aur;
 mod cli;
 mod conf;
 mod installer;
+mod utils;
 
 #[derive(Parser, Clone, Debug)]
 pub struct Cli {
