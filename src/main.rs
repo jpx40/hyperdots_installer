@@ -1,6 +1,7 @@
 use clap::Parser;
 use std::string::String;
 use std::vec::Vec;
+use utils::check_distro;
 mod menu;
 use menu::Group;
 mod aur;
@@ -84,18 +85,47 @@ pub fn exec_command(c: Cli) {
         }
     }
 
-    group_names.iter().for_each(|mut n| {
+    group_names.iter().for_each(|n| {
         let mut default: Option<String> = None;
         let mut g: String = n.to_string();
-        if g.contains("=") {
-            let s: Vec<String> = n.split("=").map(|s| s.to_string()).collect();
+        if g.contains('=') {
+            let s: Vec<String> = n.split('=').map(|s| s.to_string()).collect();
             assert_eq!(s.len(), 2);
             // println!("{:?}", s)
             g = s[0].clone();
             default = Some(s[1].clone());
         }
+
         if check_groups.contains(&g) {
             let mut group = menu::Group::new_with_name(&g);
+            let mut check_default: Vec<String> = Vec::new();
+            installer::APP_LIST
+                .lock()
+                .unwrap()
+                .extra
+                .clone()
+                .iter()
+                .for_each(|a| {
+                    for (k, v) in a.clone() {
+                        if k == g {
+                            v.clone().iter().for_each(|(k, _v)| {
+                                if let Some(d) = &default {
+                                    if k == d {
+                                        check_default.push(k.clone())
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            if let Some(d) = &default {
+                if !check_default.contains(d) {
+                    println!("default app doesn't exist");
+                    std::process::exit(0);
+                }
+            }
+            drop(check_default);
+
             installer::APP_LIST
                 .lock()
                 .unwrap()

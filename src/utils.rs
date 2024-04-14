@@ -98,32 +98,65 @@ pub fn is_number(s: &str) -> bool {
 }
 
 pub fn check_distro(distro: &str) -> bool {
-    let mut sh: Command = Command::new("sh");
-    let out: Output = Command::new("cat")
+    let distro = distro.to_lowercase();
+    let mut out: Vec<String> = Vec::new();
+    let output: Output = Command::new("cat")
         .arg("/etc/os-release")
         .output()
         .expect("Failed to execute command");
 
-    let s: String = String::from_utf8_lossy(&out.stdout).to_string();
-    let split: Vec<&str> = s.split("\n").collect();
+    let s: String = String::from_utf8_lossy(&output.stdout).to_string();
+    let split: Vec<&str> = s.split('\n').collect();
     let mut os: String = String::new();
     let s: Vec<String> = split
         .iter()
         .map(|x| x.to_string())
         .filter(|s| !s.is_empty())
+        .map(|s| s.to_lowercase())
         .collect();
 
     s.iter().for_each(|s| {
-        if s.contains("ID_LIKE") {
-            let split: Vec<&str> = s.split("=").collect();
+        if s.contains("id_like") {
+            let split: Vec<&str> = s.split('=').collect();
             os = split[1].to_string();
             os = os.replace(r#"""#, "");
-            os = os.replace("\\", "");
+            os = os.replace('\\', "");
+        }
+        if s.contains("name") {
+            let split: Vec<&str> = s.split('=').collect();
+            let mut os_tmp = split[1].to_string();
+            os_tmp = os.replace(r#"""#, "");
+            os_tmp = os.replace('\\', "");
+
+            if os_tmp.contains(&distro) {
+                out.push(distro.clone());
+            }
+        }
+
+        if s.contains("id") {
+            let split: Vec<&str> = s.split('=').collect();
+            let mut os_tmp = split[1].to_string();
+            os_tmp = os.replace(r#"""#, "");
+            os_tmp = os.replace('\\', "");
+
+            if os_tmp.contains(&distro) {
+                out.push(distro.clone());
+            }
+        }
+        if s.contains("id_like") {
+            let split: Vec<&str> = s.split('=').collect();
+            let mut os_tmp = split[1].to_string();
+            os_tmp = os.replace(r#"""#, "");
+            os_tmp = os.replace('\\', "");
+
+            if os_tmp.contains(&distro) {
+                out.push(distro.clone());
+            }
         }
     });
-    let mut out: Vec<String> = Vec::new();
-    if os.contains(" ") {
-        let split: Vec<&str> = os.split(" ").collect();
+
+    if os.contains(' ') {
+        let split: Vec<&str> = os.split(' ').collect();
         for i in split {
             out.push(i.to_string().trim().to_string())
         }
@@ -131,5 +164,5 @@ pub fn check_distro(distro: &str) -> bool {
         out.push(os)
     }
     out = out.iter().map(|s| s.to_lowercase()).collect();
-    out.contains(&distro.to_string())
+    out.contains(&distro)
 }

@@ -1,4 +1,3 @@
-use config;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::env;

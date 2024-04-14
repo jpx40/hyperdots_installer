@@ -1,6 +1,3 @@
-neovim
-sublime-text4
 visual-studio-code-bin
 hyprpicker
 oh-my-zsh-git
-cargo
